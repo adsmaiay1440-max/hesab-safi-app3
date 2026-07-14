@@ -1,0 +1,2871 @@
+<!DOCTYPE html>
+<!-- saved from url=(0044)https://adsmaiay1440-max.github.io/for-test/ -->
+<html lang="ar" dir="rtl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+  <meta name="theme-color" content="#f5f0e8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>حساب الصافي والأنصبة</title>
+  <link rel="manifest" href="https://adsmaiay1440-max.github.io/for-test/manifest.json">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:       #f7f3ec;
+      --bg2:      #eee8da;
+      --surface:  #ffffff;
+      --surface2: #fdf9f3;
+      --border:   #ddd5c2;
+      --border2:  #c9bfa8;
+      --text:     #3a2e1e;
+      --text2:    #6b5a3e;
+      --muted:    #9e8c72;
+      --gold:     #b8860b;
+      --gold2:    #d4a017;
+      --gold3:    #f0c040;
+      --gold-bg:  #fef9e7;
+      --teal:     #1a7a8a;
+      --teal2:    #2596a8;
+      --teal-bg:  #e8f7f9;
+      --green:    #2e7d32;
+      --green2:   #388e3c;
+      --green-bg: #e8f5e9;
+      --red:      #c62828;
+      --red2:     #e53935;
+      --red-bg:   #ffebee;
+      --blue:     #1565c0;
+      --blue2:    #1976d2;
+      --blue-bg:  #e3f2fd;
+      --purple:   #6a1b9a;
+      --purple2:  #7b1fa2;
+      --purple-bg:#f3e5f5;
+      --shadow:   0 2px 12px rgba(100,80,40,0.10);
+      --shadow2:  0 4px 20px rgba(100,80,40,0.15);
+      --r24:24px;--r16:16px;--r12:12px;--r8:8px;
+    }
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'Cairo','Segoe UI',sans-serif;
+      background:var(--bg);
+      background-image:
+        radial-gradient(ellipse at 15% 10%,rgba(184,134,11,0.08) 0%,transparent 50%),
+        radial-gradient(ellipse at 85% 90%,rgba(26,122,138,0.07) 0%,transparent 50%);
+      min-height:100vh;
+      color:var(--text);
+      padding-bottom:40px;
+    }
+
+    /* ===== HEADER ===== */
+    .header{
+      position:sticky;top:0;z-index:200;
+      background:rgba(247,243,236,0.96);
+      backdrop-filter:blur(16px);
+      border-bottom:2px solid var(--border);
+      padding:12px 20px 10px;
+      text-align:center;
+      box-shadow:0 2px 16px rgba(100,80,40,0.12);
+    }
+    .header-glow{
+      position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+      width:200px;height:2px;
+      background:linear-gradient(90deg,transparent,var(--gold2),transparent);
+    }
+    .header .icon{
+      font-size:30px;display:block;
+      filter:drop-shadow(0 2px 6px rgba(184,134,11,0.3));
+      animation:float 3s ease-in-out infinite;
+    }
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    .header h1{
+      font-size:18px;font-weight:900;
+      color:var(--gold);
+      margin-top:2px;letter-spacing:0.3px;
+    }
+    .header p{font-size:11px;color:var(--muted);margin-top:1px}
+
+    /* ===== TABS ===== */
+    .tabs-wrapper{
+      position:sticky;top:82px;z-index:150;
+      background:rgba(247,243,236,0.95);
+      backdrop-filter:blur(10px);
+      padding:8px 16px;
+      border-bottom:1px solid var(--border);
+      box-shadow:0 1px 8px rgba(100,80,40,0.08);
+    }
+    .tabs{display:flex;gap:8px;max-width:480px;margin:0 auto}
+    .tab-btn{
+      flex:1;padding:9px 8px;border:none;border-radius:var(--r12);
+      font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;
+      cursor:pointer;transition:all 0.3s;
+      background:var(--bg2);color:var(--muted);
+      border:1.5px solid var(--border);
+      display:flex;align-items:center;justify-content:center;gap:5px;
+    }
+    .tab-btn.active{
+      background:linear-gradient(135deg,var(--purple),var(--purple2));
+      color:#fff;border-color:var(--purple);
+      box-shadow:0 4px 14px rgba(106,27,154,0.3);
+    }
+    .tab-btn .badge{
+      background:var(--gold2);color:#fff;border-radius:20px;
+      padding:1px 7px;font-size:10px;font-weight:900;min-width:20px;text-align:center;
+    }
+
+    /* ===== CONTAINER ===== */
+    .container{max-width:480px;margin:0 auto;padding:14px;position:relative;z-index:10}
+
+    /* ===== PAGES ===== */
+    .page{display:none}
+    .page.active{display:block;animation:pageIn 0.35s ease}
+    @keyframes pageIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ===== CARDS ===== */
+    .card{
+      background:var(--surface);
+      border-radius:var(--r24);padding:18px;
+      margin-bottom:14px;border:1px solid var(--border);
+      box-shadow:var(--shadow);position:relative;overflow:hidden;
+    }
+
+    /* ===== TOP SUMMARY CARD ===== */
+    .summary-top-card{
+      background:linear-gradient(145deg,#f0e6ff,#e8f4ff,#fff8e6);
+      border:1.5px solid #c9b8e8;
+      box-shadow:0 4px 24px rgba(106,27,154,0.12);
+      text-align:center;padding:20px 18px;
+    }
+    .summary-top-btn{
+      display:inline-block;padding:5px 18px;
+      background:rgba(106,27,154,0.1);border:1px solid rgba(106,27,154,0.25);
+      border-radius:30px;font-size:12px;font-weight:700;color:var(--purple);
+      margin-bottom:12px;
+    }
+    .net-big{
+      font-size:44px;font-weight:900;direction:ltr;
+      color:var(--text);letter-spacing:-1px;line-height:1.1;
+    }
+    .net-big.positive{color:var(--green)}
+    .net-big.negative{color:var(--red)}
+    .net-currency-label{font-size:17px;font-weight:700;color:var(--text2)}
+    .month-nav{
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      margin-bottom:12px;
+    }
+    .month-nav-arrow{
+      width:30px;height:30px;border-radius:50%;
+      background:rgba(106,27,154,0.12);border:1px solid rgba(106,27,154,0.3);
+      color:var(--purple);font-size:16px;font-weight:900;line-height:1;
+      display:flex;align-items:center;justify-content:center;cursor:pointer;
+      transition:background .15s,transform .1s;flex-shrink:0;
+    }
+    .month-nav-arrow:active{transform:scale(0.92)}
+    .month-nav-arrow:hover{background:rgba(106,27,154,0.22)}
+    .month-nav-arrow:disabled{opacity:0.3;cursor:not-allowed;background:rgba(106,27,154,0.06)}
+    .month-nav-label{
+      display:inline-block;padding:5px 16px;
+      background:rgba(106,27,154,0.1);border:1px solid rgba(106,27,154,0.25);
+      border-radius:30px;font-size:12px;font-weight:700;color:var(--purple);
+      white-space:nowrap;
+    }
+    .shares-row{
+      display:grid;grid-template-columns:1fr 1px 1fr;
+      margin-top:14px;padding-top:14px;
+      border-top:1.5px solid var(--border);
+    }
+    .shares-divider{background:var(--border)}
+    .share-item{text-align:center;padding:0 10px}
+    .share-item-label{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px}
+    .share-item-fraction{
+      font-size:10px;color:var(--muted);
+      background:var(--bg2);padding:2px 8px;
+      border-radius:20px;display:inline-block;margin-bottom:6px;
+      border:1px solid var(--border);
+    }
+    .share-item-amount{font-size:18px;font-weight:900;direction:ltr}
+    .share-item-amount.blue-text{color:var(--blue2)}
+    .share-item-amount.purple-text{color:var(--purple2)}
+
+    /* ===== INPUT CARD ===== */
+    .input-card{background:var(--surface2);border:1.5px solid var(--border)}
+
+    /* Mode Tabs */
+    .mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+    .mode-btn{
+      padding:11px 8px;border:none;border-radius:var(--r12);
+      font-family:'Cairo',sans-serif;font-size:13px;font-weight:800;
+      cursor:pointer;transition:all 0.3s;
+      background:var(--bg2);color:var(--muted);
+      border:1.5px solid var(--border);
+      display:flex;align-items:center;justify-content:center;gap:6px;
+    }
+    .mode-btn.income-active{
+      background:linear-gradient(135deg,#00695c,#00897b,#26a69a);
+      color:#fff;border-color:#00897b;
+      box-shadow:0 4px 16px rgba(0,137,123,0.35);
+    }
+    .mode-btn.expense-active{
+      background:linear-gradient(135deg,#b71c1c,#c62828,#e53935);
+      color:#fff;border-color:#c62828;
+      box-shadow:0 4px 16px rgba(198,40,40,0.35);
+    }
+
+    /* Category Buttons */
+    .cat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px}
+    .cat-btn{
+      padding:10px 4px;border:none;border-radius:var(--r12);
+      font-family:'Cairo',sans-serif;font-size:10px;font-weight:700;
+      cursor:pointer;transition:all 0.3s;
+      background:var(--bg);color:var(--text2);
+      border:1.5px solid var(--border);
+      display:flex;flex-direction:column;align-items:center;gap:4px;
+    }
+    .cat-btn .cat-icon{font-size:20px;display:block}
+    .cat-btn.cat-active{
+      background:linear-gradient(135deg,var(--purple-bg),#e8d5ff);
+      color:var(--purple);border-color:var(--purple2);
+      box-shadow:0 3px 12px rgba(106,27,154,0.2);
+      transform:scale(1.04);
+    }
+
+    /* Other Detail */
+    .other-detail-wrapper{display:none;margin-bottom:14px;animation:fadeSlide 0.3s ease}
+    .other-detail-wrapper.show{display:block}
+    @keyframes fadeSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    .other-detail-input{
+      width:100%;padding:12px 16px;
+      background:var(--gold-bg);border:1.5px solid var(--gold2);
+      border-radius:var(--r12);color:var(--text);
+      font-family:'Cairo',sans-serif;font-size:14px;font-weight:600;
+      outline:none;transition:all 0.3s;direction:rtl;
+    }
+    .other-detail-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,134,11,0.15)}
+    .other-detail-input::placeholder{color:var(--muted);font-size:13px;font-weight:400}
+
+    /* Amount Box */
+    .amount-display-box{
+      background:var(--bg);border:1.5px solid var(--border2);
+      border-radius:var(--r16);padding:14px 18px;
+      margin-bottom:14px;
+    }
+    .amount-display-box.income-mode{border-color:#80cbc4;background:#f0faf9}
+    .amount-display-box.expense-mode{border-color:#ef9a9a;background:#fff5f5}
+    .amount-input{
+      width:100%;background:transparent;border:none;outline:none;
+      color:var(--text);font-family:'Cairo',sans-serif;
+      font-size:32px;font-weight:900;text-align:center;direction:ltr;
+      -webkit-appearance:none;-moz-appearance:textfield;
+    }
+    .amount-input::placeholder{color:var(--muted);font-size:26px;font-weight:400}
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+    .amount-unit{text-align:center;font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
+
+    /* ===== CALCULATE BUTTON ===== */
+    .btn-calc{
+      width:100%;padding:15px;
+      background:linear-gradient(135deg,#d4a017,#b8860b,#9a7209);
+      border:none;border-radius:var(--r24);
+      color:#fff;font-family:'Cairo',sans-serif;
+      font-size:17px;font-weight:900;cursor:pointer;transition:all 0.3s;
+      box-shadow:0 6px 20px rgba(184,134,11,0.35);
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      margin-bottom:14px;position:relative;overflow:hidden;
+    }
+    .btn-calc::before{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(135deg,rgba(255,255,255,0.2) 0%,transparent 50%);
+    }
+    .btn-calc:active{transform:scale(0.97);box-shadow:0 3px 10px rgba(184,134,11,0.25)}
+
+    /* Month Totals */
+    .month-totals{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+    .total-box{border-radius:var(--r12);padding:12px 10px;text-align:center;border:1.5px solid}
+    .total-box.income-box{background:var(--green-bg);border-color:#a5d6a7}
+    .total-box.expense-box{background:var(--red-bg);border-color:#ef9a9a}
+    .total-box-label{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:5px}
+    .total-box-value{font-size:18px;font-weight:900;direction:ltr}
+    .total-box.income-box .total-box-value{color:var(--green2)}
+    .total-box.expense-box .total-box-value{color:var(--red2)}
+
+    /* Action Buttons */
+    .action-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+    .action-btn{
+      padding:11px 5px;border:none;border-radius:var(--r12);
+      font-family:'Cairo',sans-serif;font-size:10px;font-weight:800;
+      cursor:pointer;transition:all 0.3s;
+      display:flex;flex-direction:column;align-items:center;gap:4px;
+    }
+    .action-btn .btn-icon{font-size:18px;display:block}
+    .btn-print{background:var(--red-bg);border:1.5px solid #ef9a9a;color:var(--red)}
+    .btn-print:hover{background:#ffcdd2}
+    .btn-clear-val{background:var(--gold-bg);border:1.5px solid #f0c040;color:var(--gold)}
+    .btn-clear-val:hover{background:#fef3c7}
+    .btn-reset-all{background:var(--bg2);border:1.5px solid var(--border2);color:var(--muted)}
+    .btn-reset-all:hover{background:var(--border)}
+    .action-btn:active{transform:scale(0.97)}
+
+    /* Error */
+    .error-msg{
+      display:none;background:var(--red-bg);border:1px solid #ef9a9a;
+      border-radius:var(--r12);padding:10px 14px;text-align:center;
+      color:var(--red);font-size:12px;font-weight:700;margin-bottom:10px;
+      animation:shake 0.4s ease;
+    }
+    .error-msg.visible{display:block}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+    /* Toast */
+    .toast{
+      position:fixed;top:20px;left:50%;
+      transform:translateX(-50%) translateY(-100px);
+      background:linear-gradient(135deg,var(--green),var(--green2));
+      color:#fff;padding:10px 22px;border-radius:50px;
+      font-size:13px;font-weight:800;z-index:9999;
+      transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow:var(--shadow2);white-space:nowrap;
+    }
+    .toast.show{transform:translateX(-50%) translateY(0)}
+
+    /* History */
+    .history-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    .history-title{font-size:15px;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:6px}
+    .btn-del-all{
+      padding:6px 13px;background:var(--red-bg);
+      border:1px solid #ef9a9a;border-radius:30px;
+      color:var(--red);font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;
+    }
+
+    /* Month Summary Card */
+    .month-summary-card{
+      background:linear-gradient(135deg,var(--purple-bg),var(--blue-bg));
+      border:1.5px solid #c5b8e8;border-radius:var(--r16);padding:14px;margin-bottom:14px;
+    }
+    .month-summary-title{font-size:12px;font-weight:800;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:5px}
+    .month-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .msm-item{text-align:center;background:rgba(255,255,255,0.7);border-radius:10px;padding:8px 4px;border:1px solid var(--border)}
+    .msm-label{font-size:9px;color:var(--muted);font-weight:700;margin-bottom:4px}
+    .msm-value{font-size:14px;font-weight:900;direction:ltr}
+    .msm-value.green{color:var(--green2)}
+    .msm-value.red{color:var(--red2)}
+    .msm-value.gold{color:var(--gold)}
+
+    /* Record Items */
+    .record-item{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--r16);padding:13px;margin-bottom:10px;
+      position:relative;overflow:hidden;transition:all 0.3s;
+      box-shadow:var(--shadow);
+    }
+    .record-item::before{
+      content:'';position:absolute;right:0;top:0;bottom:0;width:3px;
+      border-radius:0 var(--r16) var(--r16) 0;
+    }
+    .record-item.income-rec::before{background:linear-gradient(180deg,var(--green2),var(--teal2))}
+    .record-item.expense-rec::before{background:linear-gradient(180deg,var(--red2),var(--red))}
+    .rec-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+    .rec-left{display:flex;flex-direction:column;gap:2px}
+    .rec-date{font-size:10px;color:var(--muted);font-weight:600}
+    .rec-cat{font-size:12px;font-weight:800}
+    .income-rec .rec-cat{color:var(--green2)}
+    .expense-rec .rec-cat{color:var(--red2)}
+    .rec-right{display:flex;align-items:center;gap:8px}
+    .rec-amount{font-size:17px;font-weight:900;direction:ltr}
+    .income-rec .rec-amount{color:var(--green2)}
+    .expense-rec .rec-amount{color:var(--red2)}
+    .rec-type-badge{font-size:9px;font-weight:800;padding:3px 8px;border-radius:20px}
+    .income-badge{background:var(--green-bg);color:var(--green2);border:1px solid #a5d6a7}
+    .expense-badge{background:var(--red-bg);color:var(--red2);border:1px solid #ef9a9a}
+    .rec-del{
+      width:28px;height:28px;background:var(--red-bg);
+      border:1px solid #ef9a9a;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;font-size:12px;flex-shrink:0;transition:all 0.2s;
+    }
+    .rec-del:hover{background:#ffcdd2}
+    .rec-pdf-btn{
+      width:100%;padding:8px;background:var(--red-bg);
+      border:1px solid #ef9a9a;border-radius:10px;
+      color:var(--red);font-family:'Cairo',sans-serif;
+      font-size:11px;font-weight:700;cursor:pointer;margin-top:8px;
+      display:flex;align-items:center;justify-content:center;gap:5px;
+    }
+
+    /* Empty State */
+    .empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
+    .empty-state .empty-icon{font-size:56px;margin-bottom:12px;display:block}
+    .empty-state p{font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text2)}
+    .empty-state small{font-size:12px;opacity:0.7}
+
+    /* Footer */
+    .footer{text-align:center;padding:18px 20px 10px;font-size:11px;color:var(--muted)}
+
+    /* Install Banner */
+    .install-banner{
+      background:linear-gradient(90deg,var(--purple),var(--purple2));
+      padding:9px 16px;text-align:center;font-size:12px;
+      font-weight:700;color:#fff;display:none;cursor:pointer;
+      position:sticky;top:130px;z-index:99;
+    }
+    .install-banner.show{display:block}
+  </style>
+<style id="hesab-enhance-style">
+      .section-mini-title{font-size:13px;font-weight:800;color:var(--text2);margin-bottom:8px}
+      .expense-group-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+      .expense-group-btn{border:none;border-radius:14px;padding:10px 8px;font-family:'Cairo',sans-serif;font-size:12px;font-weight:800;cursor:pointer;transition:all .25s;border:1.5px solid var(--border);background:var(--bg);color:var(--text2)}
+      .expense-group-btn.active{transform:translateY(-1px);box-shadow:0 8px 18px rgba(0,0,0,.09)}
+      .expense-group-btn.group-car.active{background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-color:#1e88e5;color:#0d47a1}
+      .expense-group-btn.group-fathi.active{background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-color:#43a047;color:#1b5e20}
+      .expense-group-btn.group-basheer.active{background:linear-gradient(135deg,#f3e5f5,#e1bee7);border-color:#8e24aa;color:#4a148c}
+      .cat-grid.enhanced-grid{grid-template-columns:repeat(4,1fr)}
+      .cat-grid.enhanced-grid .cat-btn.hidden-slot{display:none !important}
+      .income-location-wrap{display:block;margin-bottom:14px}
+      .input-inline{display:flex;gap:8px;align-items:center}
+      .smart-input,.smart-select{width:100%;padding:12px 14px;border-radius:14px;border:1.5px solid var(--border);background:#fff;font-family:'Cairo',sans-serif;font-size:14px;color:var(--text);outline:none}
+      .smart-input:focus,.smart-select:focus{border-color:var(--gold2);box-shadow:0 0 0 3px rgba(212,160,23,.12)}
+      .mini-btn{border:none;border-radius:12px;padding:11px 14px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#fff;white-space:nowrap}
+      .mini-btn.secondary{background:linear-gradient(135deg,#78909c,#546e7a)}
+      .mini-btn.outline{background:#fff;color:var(--text2);border:1.5px solid var(--border)}
+      .saved-locations{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+      .loc-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;background:#fff8e6;border:1px solid #f0c040;border-radius:999px;font-size:12px;font-weight:700;color:#6b5a3e;cursor:pointer}
+      .loc-chip button{border:none;background:transparent;color:#c62828;font-size:14px;cursor:pointer;line-height:1}
+      .alert-card{margin-top:14px;background:linear-gradient(145deg,#fffef8,#f7f2ff)}
+      .alert-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .alert-grid .full{grid-column:1/-1}
+      .alert-note{margin-top:10px;padding:10px 12px;background:#fff7e6;border:1px solid #f3d585;border-radius:14px;color:#7a6331;font-size:12px;line-height:1.8}
+      .action-btns.enhanced-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .action-btns.enhanced-actions .action-btn{margin:0}
+      .month-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+      .break-chip{padding:8px;border-radius:14px;text-align:center;border:1px solid var(--border);background:#fff;font-size:11px}
+      .break-chip strong{display:block;font-size:13px;margin-top:4px}
+      .break-chip.car strong{color:#1565c0}.break-chip.fathi strong{color:#2e7d32}.break-chip.basheer strong{color:#8e24aa}
+      .history-filter-note{font-size:12px;color:var(--muted);margin:6px 0 10px}
+      @media (max-width:420px){
+        .expense-group-tabs{grid-template-columns:1fr}
+        .alert-grid,.action-btns.enhanced-actions{grid-template-columns:1fr}
+        .month-breakdown{grid-template-columns:1fr}
+        .input-inline{flex-direction:column}
+        .mini-btn{width:100%}
+      }
+    
+
+    /* ===== PATCH: delete confirm + company settlement ===== */
+    .share-item-note{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5}
+    .negative-share{color:var(--red)!important}
+    .company-settlement-card{
+      margin:14px 0 12px;padding:14px 16px;border-radius:20px;
+      border:1.5px solid #d9c6f2;background:linear-gradient(145deg,#fffdfd,#f8f2ff);
+      box-shadow:0 3px 14px rgba(106,27,154,.08)
+    }
+    .settlement-note{font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.8}
+    .settlement-grid{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:10px}
+    .settlement-btn{min-width:120px}
+    .settlement-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .st-chip{padding:10px;border-radius:14px;border:1px solid var(--border);background:#fff;text-align:center;font-size:11px;font-weight:700;color:var(--text2)}
+    .st-chip strong{display:block;margin-top:5px;font-size:14px;direction:ltr}
+    .st-chip.total strong{color:var(--purple2)}
+    .st-chip.paid strong{color:var(--green2)}
+    .st-chip.remain strong{color:var(--blue2)}
+    .company-history-card{margin-bottom:12px;background:linear-gradient(145deg,#fffefe,#faf6ff)}
+    .company-history-list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+    .company-history-empty{padding:16px;border-radius:14px;background:#fff;text-align:center;color:var(--muted);font-size:12px;border:1px dashed var(--border2)}
+    .settlement-record{background:linear-gradient(135deg,#f9f3ff,#ffffff);border:1px solid #dbc7f0}
+    .settlement-record::before{background:linear-gradient(180deg,var(--purple2),var(--purple))!important}
+    .settlement-badge{background:var(--purple-bg);color:var(--purple2);border:1px solid #d6b6ea}
+    .confirm-overlay{
+      position:fixed;inset:0;background:rgba(32,24,16,.45);display:none;align-items:center;justify-content:center;
+      z-index:9999;padding:18px;backdrop-filter:blur(6px)
+    }
+    .confirm-overlay.show{display:flex}
+    .confirm-box{
+      width:min(100%,360px);background:#fff;border-radius:22px;border:1px solid var(--border);
+      box-shadow:0 18px 50px rgba(0,0,0,.18);padding:18px 16px;text-align:right
+    }
+    .confirm-title{font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px}
+    .confirm-message{font-size:13px;color:var(--text2);line-height:1.9;margin-bottom:14px}
+    .confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .confirm-btn{border:none;border-radius:14px;padding:12px 10px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;cursor:pointer}
+    .confirm-btn.cancel{background:#f4efe6;color:var(--text2);border:1px solid var(--border)}
+    .confirm-btn.danger{background:linear-gradient(135deg,#e53935,#b71c1c);color:#fff}
+    .undo-bar{
+      position:fixed;right:14px;left:14px;bottom:18px;z-index:9998;display:none;align-items:center;justify-content:space-between;gap:10px;
+      background:linear-gradient(135deg,#2f2a24,#4d4032);color:#fff;padding:14px 16px;border-radius:18px;
+      box-shadow:0 12px 30px rgba(0,0,0,.22)
+    }
+    .undo-bar.show{display:flex}
+    .undo-bar button{border:none;background:#fff;color:#2f2a24;border-radius:12px;padding:9px 14px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:900;cursor:pointer;white-space:nowrap}
+    .undo-text{font-size:13px;line-height:1.7}
+    @media (max-width:420px){
+      .settlement-grid,.settlement-stats,.confirm-actions{grid-template-columns:1fr}
+      .undo-bar{flex-direction:column;align-items:stretch}
+      .undo-bar button,.settlement-btn{width:100%}
+    }
+
+    </style></head>
+<body>
+
+<div class="toast" id="toast">✅ تم الحفظ!</div>
+<div class="confirm-overlay" id="confirmOverlay" aria-hidden="true">
+  <div class="confirm-box" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+    <div class="confirm-title" id="confirmTitle">تأكيد الحذف</div>
+    <div class="confirm-message" id="confirmMessage">هل أنت متأكد؟</div>
+    <div class="confirm-actions">
+      <button type="button" class="confirm-btn cancel" id="confirmCancelBtn">إلغاء</button>
+      <button type="button" class="confirm-btn danger" id="confirmOkBtn">تأكيد الحذف</button>
+    </div>
+  </div>
+</div>
+<div class="undo-bar" id="undoBar">
+  <div class="undo-text" id="undoText">تم الحذف</div>
+  <button type="button" id="undoBtn">استعادة</button>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <span class="icon">🚛</span>
+  <h1>حساب الصافي والأنصبة</h1>
+  <p>نظام تتبع الدخل والمصروفات وتوزيع الأرباح</p>
+  <div class="header-glow"></div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs-wrapper">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(&#39;calc&#39;)" id="tab-calc">🧮 الحاسبة</button>
+    <button class="tab-btn" onclick="switchTab(&#39;history&#39;)" id="tab-history">
+      📋 السجلات <span class="badge" id="histBadge">6</span>
+    </button>
+  </div>
+</div>
+
+<div class="install-banner show" id="installBanner" onclick="installApp()">
+  📲 اضغط هنا لتثبيت التطبيق على هاتفك
+</div>
+
+<div class="container">
+
+  <!-- PAGE: CALCULATOR -->
+  <div class="page active" id="page-calc">
+
+    <!-- Summary Top -->
+    <div class="card summary-top-card">
+      <div class="month-nav">
+        <button type="button" class="month-nav-arrow" id="monthNavPrev" onclick="changeViewedMonth(-1)" aria-label="الشهر السابق" title="الشهر السابق">‹</button>
+        <div class="month-nav-label" id="monthNavLabel">📅 صافي أرباح شهر يوليو</div>
+        <button type="button" class="month-nav-arrow" id="monthNavNext" onclick="changeViewedMonth(1)" aria-label="الشهر التالي" title="الشهر التالي">›</button>
+      </div>
+      <div>
+        <span class="net-big" id="topNet">٠٫٠٠</span>
+        <span class="net-currency-label"> ريال</span>
+      </div>
+      <div class="shares-row">
+        <div class="share-item">
+          <div class="share-item-label">نصيبك</div>
+          <div class="share-item-fraction">(1/3)</div>
+          <div class="share-item-amount blue-text" id="topDriver">٠٫٠٠</div>
+        </div>
+        <div class="shares-divider"></div>
+        <div class="share-item">
+          <div class="share-item-label">المتبقي للشركة</div>
+          <div class="share-item-fraction">(2/3)</div>
+          <div class="share-item-amount purple-text" id="topCompany">٠٫٠٠</div>
+          <div class="share-item-note" id="topCompanyNote">بعد خصم ما تم تسليمه للشركة</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="company-settlement-card" id="companySettlementCard">
+      <div class="section-mini-title">🏢 تسليم نصيب الشركة</div>
+      <div class="settlement-note">سجّل أي مبلغ تم تسليمه للشركة، وسيتم خصمه تلقائيًا من المتبقي للشركة لهذا الشهر.</div>
+      <div class="settlement-grid">
+        <input type="number" class="smart-input" id="companySettlementInput" placeholder="اكتب مبلغ التسليم" min="0" step="0.01" inputmode="decimal">
+        <button type="button" class="mini-btn settlement-btn" onclick="addCompanySettlement()">تسجيل التسليم</button>
+      </div>
+      <div class="settlement-stats">
+        <div class="st-chip total">إجمالي نصيب الشركة<strong id="companyGrossAmount">٠٫٠٠</strong></div>
+        <div class="st-chip paid">تم تسليمه<strong id="companyPaidAmount">٠٫٠٠</strong></div>
+        <div class="st-chip remain">المتبقي<strong id="companyRemainingAmount">٠٫٠٠</strong></div>
+      </div>
+    </div>
+
+    <!-- Main Input Card -->
+    <div class="card input-card">
+      <div class="mode-tabs">
+        <button class="mode-btn income-active" id="incomeBtn" onclick="setMode(&#39;income&#39;)">💵 إيراد / دخل</button>
+        <button class="mode-btn" id="expenseBtn" onclick="setMode(&#39;expense&#39;)">📤 مصاريف</button>
+      </div>
+
+      <div id="catSection" style="display:none">
+        <div class="section-mini-title">🎨 اختر القسم الرئيسي للمصروف</div>
+        <div class="expense-group-tabs" id="expenseGroupTabs">
+          <button type="button" class="expense-group-btn group-car active" data-group="car" onclick="selectGroup('car')">🚚 السيارة</button>
+          <button type="button" class="expense-group-btn group-fathi" data-group="fathi" onclick="selectGroup('fathi')">🧑 فتحي</button>
+          <button type="button" class="expense-group-btn group-basheer" data-group="basheer" onclick="selectGroup('basheer')">🏢 بشير</button>
+        </div>
+        <div class="section-mini-title">🧾 نوع المصروف</div>
+      
+        <div class="cat-grid enhanced-grid">
+          <button class="cat-btn" id="cat-diesel" onclick="selectCat(&#39;diesel&#39;)" style="display: flex;"><span class="cat-icon">⛽</span>ديزل</button>
+          <button class="cat-btn hidden-slot" id="cat-oil" onclick="selectCat(&#39;oil&#39;)" style="display: none;">
+            <span class="cat-icon">🛢️</span>زيت
+          </button>
+          <button class="cat-btn hidden-slot" id="cat-maint" onclick="selectCat(&#39;maint&#39;)" style="display: none;">
+            <span class="cat-icon">🔧</span>صيانة
+          </button>
+          <button class="cat-btn hidden-slot" id="cat-living" onclick="selectCat(&#39;living&#39;)" style="display: none;">
+            <span class="cat-icon">🏠</span>المعيشة
+          </button>
+          <button class="cat-btn hidden-slot" id="cat-other" onclick="selectCat(&#39;other&#39;)" style="display: none;">
+            <span class="cat-icon">➕</span>أخرى
+          </button>
+        </div>
+      </div>
+
+      <div class="other-detail-wrapper" id="otherDetailWrapper">
+        <input type="text" class="other-detail-input" id="otherDetail" placeholder="اكتب التفاصيل هنا..." maxlength="80">
+      </div>
+
+      
+        <div class="income-location-wrap" id="incomeLocationWrap" style="display: block;">
+          <div class="section-mini-title">📍 مكان الإيراد</div>
+          <div class="input-inline">
+            <input type="text" class="smart-input" id="incomeLocationInput" list="incomeLocationList" maxlength="80" placeholder="مثال: من الرياض ل الدمام">
+            <button type="button" class="mini-btn" id="saveLocationBtn">حفظ المكان</button>
+          </div>
+          <datalist id="incomeLocationList"><option value="من الرياض ل الدمام"></option></datalist>
+          <div class="saved-locations" id="savedLocations">
+        <span class="loc-chip" data-name="من الرياض ل الدمام">
+          <span class="loc-text">من الرياض ل الدمام</span>
+          <button type="button" data-remove="من الرياض ل الدمام">×</button>
+        </span></div>
+        </div>
+      <div class="amount-display-box income-mode" id="amountBox">
+        <input type="number" class="amount-input" id="amountInput" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+        <div class="amount-unit">ريال</div>
+      </div>
+
+      <div class="error-msg" id="errorMsg">⚠️ يرجى إدخال قيمة صحيحة أكبر من صفر</div>
+
+      <button class="btn-calc" onclick="addEntry()">
+        <span>📊</span> احسب الناتج
+      </button>
+
+      <div class="month-totals">
+        <div class="total-box income-box">
+          <div class="total-box-label">💰 دخل الشهر</div>
+          <div class="total-box-value" id="monthIncome">٠٫٠٠</div>
+        </div>
+        <div class="total-box expense-box">
+          <div class="total-box-label">📉 مصاريف الشهر</div>
+          <div class="total-box-value" id="monthExpense">٠٫٠٠</div>
+        </div>
+      </div>
+        <div class="month-breakdown" id="monthBreakdown">
+          <div class="break-chip car">🚚 السيارة<strong id="breakCar">٠٫٠٠</strong></div>
+          <div class="break-chip fathi">🧑 فتحي<strong id="breakFathi">٠٫٠٠</strong></div>
+          <div class="break-chip basheer">🏢 بشير<strong id="breakBasheer">٠٫٠٠</strong></div>
+        </div>
+      
+
+      <div class="action-btns enhanced-actions">
+        <button class="action-btn btn-print" onclick="printMonthlyReport()">
+          <span class="btn-icon">🖨️</span>طباعة التقرير الشهري
+        </button>
+          <button class="action-btn btn-print" id="weeklyReportBtn" onclick="printWeeklyReport()">
+            <span class="btn-icon">🗓️</span>طباعة التقرير الأسبوعي
+          </button>
+        
+        <button class="action-btn btn-clear-val" onclick="clearValue()">
+          <span class="btn-icon">🧹</span>مسح القيمة
+        </button>
+        <button class="action-btn btn-reset-all" onclick="resetAllData()">
+          <span class="btn-icon">🔄</span>مسح جميع البيانات
+        </button>
+        <button class="action-btn btn-print" onclick="exportBackupToFile()">
+          <span class="btn-icon">📤</span>تصدير نسخة احتياطية
+        </button>
+        <button class="action-btn btn-print" onclick="document.getElementById('importBackupInput').click()">
+          <span class="btn-icon">📥</span>استيراد نسخة احتياطية
+        </button>
+        <input type="file" id="importBackupInput" accept="application/json,.json" style="display:none" onchange="importBackupFromFile(event)">
+      </div>
+          <div class="card alert-card" id="alertCard">
+            <div class="section-mini-title">🔔 التنبيهات اليومية</div>
+            <div class="alert-grid">
+              <div class="full">
+                <label style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--text2)">
+                  <input type="checkbox" id="alertEnabled" style="width:18px;height:18px"> تشغيل التنبيه اليومي
+                </label>
+              </div>
+              <div>
+                <div class="section-mini-title">عدد المرات</div>
+                <select class="smart-select" id="alertCount">
+                  <option value="1">مرة واحدة</option>
+                  <option value="2">مرتين</option>
+                  <option value="3">3 مرات</option>
+                </select>
+              </div>
+              <div>
+                <div class="section-mini-title">الصوت والإذن</div>
+                <button type="button" class="mini-btn secondary" id="askNotifBtn">تفعيل الإشعارات</button>
+              </div>
+              <div>
+                <div class="section-mini-title">الوقت الأول</div>
+                <input type="time" class="smart-input" id="alertTime1" value="09:00">
+              </div>
+              <div>
+                <div class="section-mini-title">الوقت الثاني</div>
+                <input type="time" class="smart-input" id="alertTime2" value="15:00">
+              </div>
+              <div class="full">
+                <div class="section-mini-title">الوقت الثالث</div>
+                <input type="time" class="smart-input" id="alertTime3" value="21:00">
+              </div>
+              <div class="full">
+                <div class="section-mini-title">عنوان التنبيه</div>
+                <input type="text" class="smart-input" id="alertTitle" maxlength="60" value="تذكير إضافة البيانات">
+              </div>
+              <div class="full">
+                <div class="section-mini-title">نص التنبيه</div>
+                <input type="text" class="smart-input" id="alertBody" maxlength="120" value="من فضلك سجل دخل ومصاريف اليوم.">
+              </div>
+              <div class="full">
+                <button type="button" class="mini-btn" id="saveAlertsBtn">حفظ إعدادات التنبيه</button>
+              </div>
+            </div>
+            <div class="alert-note">مهم: نسخة الويب بتعرض تنبيه جميل داخل المتصفح، ومع تثبيت التطبيق والسماح بالإشعارات ممكن يظهر كنوتيفيكيشن على الموبايل. لكن الظهور على شاشة القفل والصوت المخصص بشكل مضمون 100% بيعتمد على دعم المتصفح ونظام الهاتف.</div>
+          </div>
+        
+    </div>
+  </div>
+
+  <!-- PAGE: HISTORY -->
+  <div class="page" id="page-history">
+    <div class="history-top">
+      <div class="history-title">📋 سجل العمليات</div>
+      <button class="btn-del-all" onclick="clearAllRecords()">🗑️ مسح الكل</button>
+    </div><div class="history-filter-note" id="historyFilterNote">الملخص بالأعلى للشهر الحالي، والسجل بالأسفل يحتفظ بكل الشهور بدون حذف تلقائي.</div>
+    <div class="month-summary-card" id="histSummary" style="display: block;">
+      <div class="month-summary-title">📊 ملخص الشهر الحالي</div>
+      <div class="month-summary-grid">
+        <div class="msm-item">
+          <div class="msm-label">إجمالي الدخل</div>
+          <div class="msm-value green" id="hsTotalIncome">٠٫٠٠</div>
+        </div>
+        <div class="msm-item">
+          <div class="msm-label">إجمالي المصاريف</div>
+          <div class="msm-value red" id="hsTotalExpense">٠٫٠٠</div>
+        </div>
+        <div class="msm-item">
+          <div class="msm-label">الصافي</div>
+          <div class="msm-value gold" id="hsNet">٠٫٠٠</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="month-summary-card company-history-card" id="companySettlementHistoryCard">
+      <div class="month-summary-title">🏢 سجل تسليم نصيب الشركة</div>
+      <div class="month-summary-grid">
+        <div class="msm-item">
+          <div class="msm-label">تم تسليمه هذا الشهر</div>
+          <div class="msm-value green" id="companyHistoryPaidCurrent">٠٫٠٠</div>
+        </div>
+        <div class="msm-item">
+          <div class="msm-label">المتبقي للشركة</div>
+          <div class="msm-value gold" id="companyHistoryRemainingCurrent">٠٫٠٠</div>
+        </div>
+        <div class="msm-item">
+          <div class="msm-label">عدد عمليات التسليم</div>
+          <div class="msm-value" id="companyHistoryCount">٠</div>
+        </div>
+      </div>
+      <div class="company-history-list" id="companySettlementHistory"></div>
+    </div>
+    <div id="historyList">
+        <div class="record-item income-rec" id="rec-1775114785081">
+          <div class="rec-header">
+            <div class="rec-left">
+              <div class="rec-date">🕐 ٢ أبريل ٢٠٢٦ — ١٠:٢٦:٢٥ ص</div>
+              <div class="rec-cat">💵 دخل — من الرياض ل الدمام</div>
+            </div>
+            <div class="rec-right">
+              <div>
+                <div class="rec-amount">٢٬٠٠٠٫٠٠</div>
+                <span class="rec-type-badge income-badge">دخل</span>
+              </div>
+              <div class="rec-del" onclick="deleteRecord(1775114785081)">🗑️</div>
+            </div>
+          </div>
+          <button class="rec-pdf-btn" onclick="exportRecordPDF(1775114785081)">📄 تصدير PDF</button>
+        </div>
+        <div class="record-item expense-rec" id="rec-1775114772113">
+          <div class="rec-header">
+            <div class="rec-left">
+              <div class="rec-date">🕐 ٢ أبريل ٢٠٢٦ — ١٠:٢٦:١٢ ص</div>
+              <div class="rec-cat">🏢 بشير / 📝 تفصيل مخصص — مصروف</div>
+            </div>
+            <div class="rec-right">
+              <div>
+                <div class="rec-amount">٢٠٠٫٠٠</div>
+                <span class="rec-type-badge expense-badge">بشير</span>
+              </div>
+              <div class="rec-del" onclick="deleteRecord(1775114772113)">🗑️</div>
+            </div>
+          </div>
+          <button class="rec-pdf-btn" onclick="exportRecordPDF(1775114772113)">📄 تصدير PDF</button>
+        </div>
+        <div class="record-item expense-rec" id="rec-1775114762768">
+          <div class="rec-header">
+            <div class="rec-left">
+              <div class="rec-date">🕐 ٢ أبريل ٢٠٢٦ — ١٠:٢٦:٠٢ ص</div>
+              <div class="rec-cat">🧑 فتحي / 🛏️ معيشة</div>
+            </div>
+            <div class="rec-right">
+              <div>
+                <div class="rec-amount">٢٠٫٠٠</div>
+                <span class="rec-type-badge expense-badge">فتحي</span>
+              </div>
+              <div class="rec-del" onclick="deleteRecord(1775114762768)">🗑️</div>
+            </div>
+          </div>
+          <button class="rec-pdf-btn" onclick="exportRecordPDF(1775114762768)">📄 تصدير PDF</button>
+        </div>
+        <div class="record-item expense-rec" id="rec-1775114755747">
+          <div class="rec-header">
+            <div class="rec-left">
+              <div class="rec-date">🕐 ٢ أبريل ٢٠٢٦ — ١٠:٢٥:٥٥ ص</div>
+              <div class="rec-cat">🚚 السيارة / 🔧 صيانة</div>
+            </div>
+            <div class="rec-right">
+              <div>
+                <div class="rec-amount">٢٠٠٫٠٠</div>
+                <span class="rec-type-badge expense-badge">السيارة</span>
+              </div>
+              <div class="rec-del" onclick="deleteRecord(1775114755747)">🗑️</div>
+            </div>
+          </div>
+          <button class="rec-pdf-btn" onclick="exportRecordPDF(1775114755747)">📄 تصدير PDF</button>
+        </div>
+        <div class="record-item expense-rec" id="rec-1775114751975">
+          <div class="rec-header">
+            <div class="rec-left">
+              <div class="rec-date">🕐 ٢ أبريل ٢٠٢٦ — ١٠:٢٥:٥١ ص</div>
+              <div class="rec-cat">🚚 السيارة / 🛢️ زيت</div>
+            </div>
+            <div class="rec-right">
+              <div>
+                <div class="rec-amount">٥٠٠٫٠٠</div>
+                <span class="rec-type-badge expense-badge">السيارة</span>
+              </div>
+              <div class="rec-del" onclick="deleteRecord(1775114751975)">🗑️</div>
+            </div>
+          </div>
+          <button class="rec-pdf-btn" onclick="exportRecordPDF(1775114751975)">📄 تصدير PDF</button>
+        </div>
+        <div class="record-item expense-rec" id="rec-1775114748773">
+          <div class="rec-header">
+            <div class="rec-left">
+              <div class="rec-date">🕐 ٢ أبريل ٢٠٢٦ — ١٠:٢٥:٤٨ ص</div>
+              <div class="rec-cat">🚚 السيارة / ⛽ ديزل</div>
+            </div>
+            <div class="rec-right">
+              <div>
+                <div class="rec-amount">١٥٠٫٠٠</div>
+                <span class="rec-type-badge expense-badge">السيارة</span>
+              </div>
+              <div class="rec-del" onclick="deleteRecord(1775114748773)">🗑️</div>
+            </div>
+          </div>
+          <button class="rec-pdf-btn" onclick="exportRecordPDF(1775114748773)">📄 تصدير PDF</button>
+        </div></div>
+  </div>
+
+  <div class="footer">حساب الصافي والأنصبة © 2026 — جميع الحقوق محفوظة</div>
+</div>
+
+<script>
+/* ===== STATE ===== */
+let currentMode='income', currentCat=null, currentGroup='basheer';
+const CAT_LABELS={diesel:'⛽ ديزل',oil:'🛢️ زيت',maint:'🔧 صيانة',living:'🏠 معيشة',other:'➕ أخرى'};
+const CAT_AR={diesel:'ديزل',oil:'زيت',maint:'صيانة',living:'المعيشة',other:'أخرى'};
+const GROUP_LABELS={car:'🚚 السيارة',fathi:'🧑 فتحي',basheer:'🏢 بشير'};
+
+function fmt(n){return n.toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2})}
+
+/* ===== EXPENSE GROUP ===== */
+function selectGroup(group){
+  currentGroup=group;
+  document.querySelectorAll('.expense-group-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.querySelector('.expense-group-btn.group-'+group);
+  if(btn) btn.classList.add('active');
+}
+
+/* ===== MODE ===== */
+function setMode(mode){
+  currentMode=mode; currentCat=null;
+  const ib=document.getElementById('incomeBtn'), eb=document.getElementById('expenseBtn');
+  const cs=document.getElementById('catSection'), ab=document.getElementById('amountBox');
+  const odw=document.getElementById('otherDetailWrapper');
+  if(mode==='income'){
+    ib.className='mode-btn income-active'; eb.className='mode-btn';
+    cs.style.display='none'; odw.classList.remove('show');
+    ab.className='amount-display-box income-mode';
+  } else {
+    ib.className='mode-btn'; eb.className='mode-btn expense-active';
+    cs.style.display='block'; ab.className='amount-display-box expense-mode';
+  }
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('cat-active'));
+  document.getElementById('amountInput').value='';
+  document.getElementById('errorMsg').classList.remove('visible');
+}
+
+/* ===== CATEGORY ===== */
+function selectCat(cat){
+  currentCat=cat;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('cat-active'));
+  document.getElementById('cat-'+cat).classList.add('cat-active');
+  const odw=document.getElementById('otherDetailWrapper');
+  if(cat==='other') odw.classList.add('show');
+  else { odw.classList.remove('show'); document.getElementById('otherDetail').value=''; }
+}
+
+/* ===== ADD ENTRY ===== */
+function addEntry(){
+  const amount=parseFloat(document.getElementById('amountInput').value);
+  const errEl=document.getElementById('errorMsg');
+  if(isNaN(amount)||amount<=0){errEl.classList.add('visible');return}
+  errEl.classList.remove('visible');
+  if(currentMode==='expense'&&!currentCat){
+    errEl.textContent='⚠️ يرجى اختيار نوع المصروف أولاً';
+    errEl.classList.add('visible');return;
+  }
+  errEl.textContent='⚠️ يرجى إدخال قيمة صحيحة أكبر من صفر';
+  const now=new Date();
+  const record={
+    id:Date.now(), type:currentMode,
+    cat:currentMode==='expense'?currentCat:'income',
+    catLabel:currentMode==='expense'?(GROUP_LABELS[currentGroup]+' / '+CAT_LABELS[currentCat]):'💵 دخل',
+    catAr:currentMode==='expense'?CAT_AR[currentCat]:'إيراد عام',
+    expenseGroup:currentMode==='expense'?currentGroup:undefined,
+    detail:currentCat==='other'?document.getElementById('otherDetail').value.trim():'',
+    amount:amount,
+    date:now.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'}),
+    time:now.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+    month:now.getFullYear()+'-'+(now.getMonth()+1)
+  };
+  const records=getRecords();
+  records.unshift(record);
+  saveRecords(records);
+  updateTopSummary(); updateMonthTotals();
+  clearValue();
+  showToast(currentMode==='income'?'✅ تم تسجيل الدخل!':'✅ تم تسجيل المصروف!');
+}
+
+function clearValue(){
+  document.getElementById('amountInput').value='';
+  document.getElementById('otherDetail').value='';
+  document.getElementById('errorMsg').classList.remove('visible');
+}
+
+function resetAllData(){
+  if(!confirm('هل أنت متأكد من مسح جميع البيانات والبدء من جديد؟')) return;
+  saveRecords([]);
+  clearValue(); updateTopSummary(); updateMonthTotals();
+  showToast('🔄 تم مسح جميع البيانات','linear-gradient(135deg,#757575,#424242)');
+}
+
+/* ===== STORAGE ===== */
+function getRecords(){try{return JSON.parse(localStorage.getItem('hesab_v3_records')||'[]')}catch{return[]}}
+function saveRecords(arr){localStorage.setItem('hesab_v3_records',JSON.stringify(arr));updateBadge()}
+function updateBadge(){document.getElementById('histBadge').textContent=getRecords().length}
+
+/* ===== BACKUP EXPORT / IMPORT ===== */
+function getBackupStorageKeys(){
+  const prefix=(typeof loadFromFirebase==='function')?'hesab_auth_v6':'hesab_light_v6';
+  return {
+    records:'hesab_v3_records',
+    settlements:'hesab_v3_company_settlements',
+    locations:prefix+'_saved_locations'
+  };
+}
+function exportBackupToFile(){
+  try{
+    const keys=getBackupStorageKeys();
+    const data={
+      version:1,
+      exportedAt:new Date().toISOString(),
+      records:JSON.parse(localStorage.getItem(keys.records)||'[]'),
+      companySettlements:JSON.parse(localStorage.getItem(keys.settlements)||'[]'),
+      savedLocations:JSON.parse(localStorage.getItem(keys.locations)||'[]')
+    };
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const now=new Date();
+    const stamp=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    const a=document.createElement('a');
+    a.href=url; a.download='hesab_backup_'+stamp+'.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if(typeof showToast==='function') showToast('📤 تم تصدير النسخة الاحتياطية بنجاح');
+  }catch(e){
+    if(typeof showToast==='function') showToast('⚠️ فشل التصدير','linear-gradient(135deg,#e65100,#bf360c)');
+    else alert('فشل التصدير: '+e.message);
+  }
+}
+function importBackupFromFile(event){
+  const file=event.target.files&&event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(){
+    try{
+      const data=JSON.parse(reader.result);
+      if(!data||typeof data!=='object') throw new Error('invalid');
+      const keys=getBackupStorageKeys();
+      if(Array.isArray(data.records)) localStorage.setItem(keys.records,JSON.stringify(data.records));
+      if(Array.isArray(data.companySettlements)) localStorage.setItem(keys.settlements,JSON.stringify(data.companySettlements));
+      if(Array.isArray(data.savedLocations)) localStorage.setItem(keys.locations,JSON.stringify(data.savedLocations));
+      if(typeof showToast==='function') showToast('📥 تم الاستيراد، جارٍ إعادة التحميل...','linear-gradient(135deg,#2e7d32,#388e3c)');
+      setTimeout(()=>location.reload(),700);
+    }catch(e){
+      if(typeof showToast==='function') showToast('⚠️ ملف النسخة الاحتياطية غير صالح','linear-gradient(135deg,#e65100,#bf360c)');
+      else alert('ملف غير صالح');
+    }
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+/* ===== MONTH NAVIGATION STATE ===== */
+let viewedMonthDate=new Date();
+viewedMonthDate.setDate(1);
+function getViewedMonthKey(){
+  return viewedMonthDate.getFullYear()+'-'+(viewedMonthDate.getMonth()+1);
+}
+function isViewedMonthCurrent(){
+  const now=new Date();
+  return viewedMonthDate.getFullYear()===now.getFullYear() && viewedMonthDate.getMonth()===now.getMonth();
+}
+function changeViewedMonth(delta){
+  const now=new Date();
+  const target=new Date(viewedMonthDate.getFullYear(), viewedMonthDate.getMonth()+delta, 1);
+  const targetIsFuture = target.getFullYear()>now.getFullYear() ||
+    (target.getFullYear()===now.getFullYear() && target.getMonth()>now.getMonth());
+  if(targetIsFuture) return; // لا نسمح بالانتقال لشهر لم يأتِ بعد
+  viewedMonthDate=target;
+  updateTopSummary(); updateMonthTotals();
+  if(typeof syncCompanySettlementUI==='function') syncCompanySettlementUI();
+}
+function updateMonthNavUI(){
+  const label=document.getElementById('monthNavLabel');
+  const nextBtn=document.getElementById('monthNavNext');
+  if(label){
+    const monthName=viewedMonthDate.toLocaleDateString('ar-SA',{month:'long',year:'numeric'});
+    label.textContent='📅 صافي أرباح شهر '+monthName;
+  }
+  if(nextBtn) nextBtn.disabled=isViewedMonthCurrent();
+}
+
+/* ===== SUMMARY ===== */
+function updateTopSummary(){
+  const recs=getRecords();
+  const cm=getViewedMonthKey();
+  let tI=0,tE=0;
+  recs.forEach(r=>{if(r.month!==cm)return;if(r.type==='income')tI+=r.amount;else tE+=r.amount;});
+  const net=tI-tE, d=net>0?net/3:0, c=net>0?(net*2)/3:0;
+  const el=document.getElementById('topNet');
+  el.textContent=fmt(Math.abs(net));
+  el.className='net-big'+(net<0?' negative':net>0?' positive':'');
+  document.getElementById('topDriver').textContent=fmt(d);
+  document.getElementById('topCompany').textContent=fmt(c);
+  updateMonthNavUI();
+}
+function updateMonthTotals(){
+  const recs=getRecords();
+  const cm=getViewedMonthKey();
+  let tI=0,tE=0,gCar=0,gFathi=0,gBasheer=0;
+  recs.forEach(r=>{
+    if(r.month!==cm)return;
+    if(r.type==='income'){tI+=r.amount;return}
+    tE+=r.amount;
+    const g=r.expenseGroup||'basheer';
+    if(g==='car')gCar+=r.amount;
+    else if(g==='fathi')gFathi+=r.amount;
+    else gBasheer+=r.amount;
+  });
+  document.getElementById('monthIncome').textContent=fmt(tI);
+  document.getElementById('monthExpense').textContent=fmt(tE);
+  const bc=document.getElementById('breakCar'), bf=document.getElementById('breakFathi'), bb=document.getElementById('breakBasheer');
+  if(bc)bc.textContent=fmt(gCar);
+  if(bf)bf.textContent=fmt(gFathi);
+  if(bb)bb.textContent=fmt(gBasheer);
+}
+
+/* ===== TABS ===== */
+function switchTab(tab){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='history')renderHistory();
+}
+
+/* ===== HISTORY ===== */
+function renderHistory(){
+  const recs=getRecords(), list=document.getElementById('historyList'), sc=document.getElementById('histSummary');
+  if(recs.length===0){
+    sc.style.display='none';
+    list.innerHTML=`<div class="empty-state"><span class="empty-icon">📂</span><p>لا توجد سجلات</p><small>قم بتسجيل دخل أو مصروف أولاً</small></div>`;
+    return;
+  }
+  const now=new Date(), cm=now.getFullYear()+'-'+(now.getMonth()+1);
+  let tI=0,tE=0;
+  recs.forEach(r=>{if(r.month!==cm)return;if(r.type==='income')tI+=r.amount;else tE+=r.amount;});
+  const tN=tI-tE;
+  document.getElementById('hsTotalIncome').textContent=fmt(tI);
+  document.getElementById('hsTotalExpense').textContent=fmt(tE);
+  document.getElementById('hsNet').textContent=fmt(tN);
+  document.getElementById('hsNet').className='msm-value '+(tN>=0?'gold':'red');
+  sc.style.display='block';
+  list.innerHTML=recs.map(r=>`
+    <div class="record-item ${r.type==='income'?'income-rec':'expense-rec'}" id="rec-${r.id}">
+      <div class="rec-header">
+        <div class="rec-left">
+          <div class="rec-date">🕐 ${r.date} — ${r.time}</div>
+          <div class="rec-cat">${r.catLabel}${r.detail?' — '+r.detail:''}</div>
+        </div>
+        <div class="rec-right">
+          <div>
+            <div class="rec-amount">${fmt(r.amount)}</div>
+            <span class="rec-type-badge ${r.type==='income'?'income-badge':'expense-badge'}">${r.type==='income'?'دخل':'مصروف'}</span>
+          </div>
+          <div class="rec-del" onclick="deleteRecord(${r.id})">🗑️</div>
+        </div>
+      </div>
+      <button class="rec-pdf-btn" onclick="exportRecordPDF(${r.id})">📄 تصدير PDF</button>
+    </div>`).join('');
+}
+
+function deleteRecord(id){
+  saveRecords(getRecords().filter(r=>r.id!==id));
+  updateTopSummary();updateMonthTotals();
+  const el=document.getElementById('rec-'+id);
+  if(el){el.style.opacity='0';el.style.transform='translateX(20px)';setTimeout(()=>renderHistory(),280);}
+  showToast('🗑️ تم الحذف','linear-gradient(135deg,#e53935,#b71c1c)');
+}
+function clearAllRecords(){
+  if(!getRecords().length)return;
+  if(!confirm('هل أنت متأكد من مسح جميع السجلات؟'))return;
+  saveRecords([]);updateTopSummary();updateMonthTotals();renderHistory();
+  showToast('🗑️ تم مسح الكل','linear-gradient(135deg,#e53935,#b71c1c)');
+}
+
+/* ===== TOAST ===== */
+function showToast(msg,bg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.background=bg||'linear-gradient(135deg,#2e7d32,#388e3c)';
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+/* ===== Helper for Monthly Records ===== */
+function getMonthRecords(){
+  const cm=getViewedMonthKey();
+  return getRecords().filter(r=>r.month===cm);
+}
+
+/* ===== PDF / PRINT - Arabic & English Reports ===== */
+/* ================================================================
+   NEW PRINT FUNCTIONS - Arabic + English Reports (HTML-based)
+================================================================ */
+
+function printMonthlyReport(){
+  try{
+    const now=new Date();
+    const recs=getMonthRecords ? getMonthRecords() : (() => {
+      const cm=now.getFullYear()+'-'+(now.getMonth()+1);
+      return (typeof allRecords!=='undefined' ? allRecords : getRecords()).filter(r=>r.month===cm);
+    })();
+    let tI=0,tE=0;
+    recs.forEach(r=>{if(r.type==='income')tI+=r.amount;else tE+=r.amount;});
+    const tN=tI-tE,d=tN>0?tN/3:0,c=tN>0?(tN*2)/3:0;
+
+    const monthNameAr=viewedMonthDate.toLocaleDateString('ar-SA',{year:'numeric',month:'long'});
+    const monthNameEn=viewedMonthDate.toLocaleDateString('en-US',{year:'numeric',month:'long'});
+    const printDate=now.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+    const printDateEn=now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+
+    const fmtNum=(n)=>n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const fmtAr=(n)=>n.toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+    // Build table rows Arabic
+    let rowsAr='';
+    recs.forEach((r,i)=>{
+      const det=r.detail?r.catAr+' - '+r.detail:r.catAr;
+      const isIncome=r.type==='income';
+      rowsAr+=`<tr style="background:${i%2===0?'#fffcf2':'#fdf7e8'}">
+        <td style="text-align:right;padding:8px 12px;color:#3a2e1e;font-size:12px;">${r.date} ${r.time||''}</td>
+        <td style="text-align:center;padding:8px 12px;color:#3a2e1e;font-size:12px;">${det}</td>
+        <td style="text-align:center;padding:8px 12px;font-weight:700;font-size:13px;color:${isIncome?'#2e7d32':'#c62828'}">${fmtAr(r.amount)} ر.س</td>
+        <td style="text-align:center;padding:8px 10px;"><span style="font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700;background:${isIncome?'#e8f5e9':'#ffebee'};color:${isIncome?'#2e7d32':'#c62828'};border:1px solid ${isIncome?'#a5d6a7':'#ef9a9a'}">${isIncome?'دخل':'مصروف'}</span></td>
+      </tr>`;
+    });
+
+    // Build table rows English
+    let rowsEn='';
+    recs.forEach((r,i)=>{
+      const det=r.detail?r.catAr+' - '+r.detail:r.catAr;
+      const isIncome=r.type==='income';
+      rowsEn+=`<tr style="background:${i%2===0?'#fffcf2':'#fdf7e8'}">
+        <td style="text-align:left;padding:8px 12px;color:#3a2e1e;font-size:12px;">${r.date} ${r.time||''}</td>
+        <td style="text-align:center;padding:8px 12px;color:#3a2e1e;font-size:12px;">${det}</td>
+        <td style="text-align:center;padding:8px 12px;font-weight:700;font-size:13px;color:${isIncome?'#2e7d32':'#c62828'}">${fmtNum(r.amount)} SAR</td>
+        <td style="text-align:center;padding:8px 10px;"><span style="font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700;background:${isIncome?'#e8f5e9':'#ffebee'};color:${isIncome?'#2e7d32':'#c62828'};border:1px solid ${isIncome?'#a5d6a7':'#ef9a9a'}">${isIncome?'Income':'Expense'}</span></td>
+      </tr>`;
+    });
+
+    const emptyMsgAr=`<tr><td colspan="4" style="text-align:center;padding:40px;color:#9e8c72;font-size:14px;">لا توجد عمليات مسجلة لهذا الشهر</td></tr>`;
+    const emptyMsgEn=`<tr><td colspan="4" style="text-align:center;padding:40px;color:#9e8c72;font-size:14px;">No transactions recorded for this month</td></tr>`;
+
+    const html=`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>التقرير الشهري - Monthly Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Cairo',sans-serif;background:#f7f3ec;color:#3a2e1e}
+    .report-page{width:210mm;min-height:297mm;margin:0 auto;background:#fffcf2;padding:0;page-break-after:always;}
+    .report-page:last-child{page-break-after:auto}
+    .top-bar{height:6px;background:linear-gradient(90deg,#b8860b,#d4a017,#f0c040,#d4a017,#b8860b)}
+    .header-section{padding:28px 30px 18px;text-align:center;border-bottom:2px solid #e8d9b0}
+    .report-icon{font-size:40px;margin-bottom:8px;display:block}
+    .report-title{font-size:26px;font-weight:900;color:#b8860b;margin-bottom:4px}
+    .report-subtitle{font-size:13px;color:#9e8c72;margin-bottom:8px}
+    .report-month{font-size:16px;font-weight:700;color:#6b5a3e;background:#fff8e1;padding:6px 20px;border-radius:30px;display:inline-block;border:1px solid #f0c040}
+    .summary-section{padding:20px 30px;background:linear-gradient(135deg,#f0e6ff,#e8f4ff,#fff8e6);border-bottom:1px solid #e8d9b0;display:flex;gap:15px;flex-wrap:wrap;justify-content:center}
+    .sum-card{flex:1;min-width:120px;max-width:160px;background:white;border-radius:14px;padding:14px 10px;text-align:center;border:1.5px solid;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+    .sum-card.ops{border-color:#c9b8e8;background:linear-gradient(135deg,#f3e5f5,#ede7f6)}
+    .sum-card.income{border-color:#a5d6a7;background:linear-gradient(135deg,#e8f5e9,#f1f8e9)}
+    .sum-card.expense{border-color:#ef9a9a;background:linear-gradient(135deg,#ffebee,#fff5f5)}
+    .sum-card.net{border-color:#90caf9;background:linear-gradient(135deg,#e3f2fd,#e8eaf6)}
+    .sum-card.share1{border-color:#80cbc4;background:linear-gradient(135deg,#e0f2f1,#e8f5e9)}
+    .sum-card.share2{border-color:#ce93d8;background:linear-gradient(135deg,#f3e5f5,#ede7f6)}
+    .sum-label{font-size:10px;font-weight:700;margin-bottom:6px;opacity:0.75}
+    .sum-value{font-size:17px;font-weight:900;direction:ltr}
+    .sum-unit{font-size:9px;opacity:0.6;margin-top:2px}
+    .ops .sum-label{color:#6a1b9a}.ops .sum-value{color:#7b1fa2}
+    .income .sum-label{color:#2e7d32}.income .sum-value{color:#2e7d32}
+    .expense .sum-label{color:#c62828}.expense .sum-value{color:#c62828}
+    .net .sum-label{color:#1565c0}.net .sum-value{color:#1565c0}
+    .share1 .sum-label{color:#00695c}.share1 .sum-value{color:#00695c}
+    .share2 .sum-label{color:#6a1b9a}.share2 .sum-value{color:#6a1b9a}
+    .table-section{padding:20px 30px}
+    .table-title{font-size:14px;font-weight:800;color:#b8860b;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .data-table{width:100%;border-collapse:collapse;border:1px solid #e8d9b0;border-radius:12px;overflow:hidden}
+    .data-table th{background:linear-gradient(135deg,#f5ebb3,#ede099);color:#6b5a3e;font-weight:800;font-size:12px;padding:10px 12px;border-bottom:2px solid #d4c080}
+    .data-table td{border-bottom:1px solid #f0e8cc;font-size:12px}
+    .data-table tr:last-child td{border-bottom:none}
+    .footer-section{margin-top:auto;padding:16px 30px;text-align:center;border-top:1px solid #e8d9b0;font-size:11px;color:#9e8c72}
+    .bottom-bar{height:6px;background:linear-gradient(90deg,#b8860b,#d4a017,#f0c040,#d4a017,#b8860b)}
+    .lang-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:10px}
+    .ar-badge{background:#fff3e0;color:#e65100;border:1px solid #ffb74d}
+    .en-badge{background:#e3f2fd;color:#1565c0;border:1px solid #90caf9}
+    @media print{
+      body{background:white}
+      .report-page{margin:0;box-shadow:none;width:100%}
+      .top-bar,.bottom-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .sum-card,.header-section,.summary-section{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    }
+    /* English page overrides */
+    .en-page{font-family:'Poppins','Cairo',sans-serif;direction:ltr}
+    .en-page .report-title{font-family:'Poppins',sans-serif}
+    .en-page .data-table th,.en-page .data-table td{font-family:'Poppins','Cairo',sans-serif}
+    .en-page .sum-value{font-family:'Poppins',sans-serif}
+  </style>
+</head>
+<body>
+
+<!-- ======================================================
+     صفحة 1: التقرير العربي
+====================================================== -->
+<div class="report-page" dir="rtl">
+  <div class="top-bar"></div>
+  <div class="header-section">
+    <span class="report-icon">🚛📊</span>
+    <div class="lang-badge ar-badge">🇸🇦 التقرير العربي</div>
+    <div class="report-title">التقرير الشهري</div>
+    <div class="report-subtitle">حساب الصافي والأنصبة</div>
+    <div class="report-month">📅 ${monthNameAr}</div>
+    <div style="font-size:10px;color:#9e8c72;margin-top:8px">تاريخ الطباعة: ${printDate}</div>
+  </div>
+
+  <div class="summary-section">
+    <div class="sum-card ops">
+      <div class="sum-label">إجمالي العمليات</div>
+      <div class="sum-value">${recs.length}</div>
+      <div class="sum-unit">عملية</div>
+    </div>
+    <div class="sum-card income">
+      <div class="sum-label">💰 إجمالي الدخل</div>
+      <div class="sum-value">${fmtAr(tI)}</div>
+      <div class="sum-unit">ريال سعودي</div>
+    </div>
+    <div class="sum-card expense">
+      <div class="sum-label">📤 إجمالي المصاريف</div>
+      <div class="sum-value">${fmtAr(tE)}</div>
+      <div class="sum-unit">ريال سعودي</div>
+    </div>
+    <div class="sum-card net">
+      <div class="sum-label">📊 الصافي</div>
+      <div class="sum-value" style="color:${tN>=0?'#1565c0':'#c62828'}">${fmtAr(Math.abs(tN))}</div>
+      <div class="sum-unit">${tN>=0?'ريال سعودي':'عجز'}</div>
+    </div>
+    <div class="sum-card share1">
+      <div class="sum-label">👤 نصيبك (1/3)</div>
+      <div class="sum-value">${fmtAr(d)}</div>
+      <div class="sum-unit">ريال سعودي</div>
+    </div>
+    <div class="sum-card share2">
+      <div class="sum-label">🏢 الشركة (2/3)</div>
+      <div class="sum-value">${fmtAr(c)}</div>
+      <div class="sum-unit">ريال سعودي</div>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <div class="table-title">📋 تفاصيل العمليات</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="text-align:right">📅 التاريخ والوقت</th>
+          <th style="text-align:center">📝 التفاصيل</th>
+          <th style="text-align:center">💵 المبلغ</th>
+          <th style="text-align:center">النوع</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsAr||emptyMsgAr}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer-section">
+    <div>🏦 حساب الصافي والأنصبة &nbsp;•&nbsp; تقرير شهر ${monthNameAr}</div>
+    <div style="margin-top:4px;font-size:10px">Hesab Al-Safi App © 2026 — جميع الحقوق محفوظة</div>
+  </div>
+  <div class="bottom-bar"></div>
+</div>
+
+<!-- ======================================================
+     صفحة 2: التقرير الإنجليزي
+====================================================== -->
+<div class="report-page en-page" dir="ltr">
+  <div class="top-bar"></div>
+  <div class="header-section">
+    <span class="report-icon">🚛📊</span>
+    <div class="lang-badge en-badge">🇺🇸 English Report</div>
+    <div class="report-title" style="font-family:'Poppins',sans-serif">Monthly Report</div>
+    <div class="report-subtitle" style="font-family:'Poppins',sans-serif">Net Profit & Shares Calculator</div>
+    <div class="report-month" style="font-family:'Poppins',sans-serif">📅 ${monthNameEn}</div>
+    <div style="font-size:10px;color:#9e8c72;margin-top:8px;font-family:'Poppins',sans-serif">Print Date: ${printDateEn}</div>
+  </div>
+
+  <div class="summary-section">
+    <div class="sum-card ops">
+      <div class="sum-label" style="font-family:'Poppins',sans-serif">Total Transactions</div>
+      <div class="sum-value">${recs.length}</div>
+      <div class="sum-unit" style="font-family:'Poppins',sans-serif">transactions</div>
+    </div>
+    <div class="sum-card income">
+      <div class="sum-label" style="font-family:'Poppins',sans-serif">💰 Total Income</div>
+      <div class="sum-value">${fmtNum(tI)}</div>
+      <div class="sum-unit" style="font-family:'Poppins',sans-serif">SAR</div>
+    </div>
+    <div class="sum-card expense">
+      <div class="sum-label" style="font-family:'Poppins',sans-serif">📤 Total Expenses</div>
+      <div class="sum-value">${fmtNum(tE)}</div>
+      <div class="sum-unit" style="font-family:'Poppins',sans-serif">SAR</div>
+    </div>
+    <div class="sum-card net">
+      <div class="sum-label" style="font-family:'Poppins',sans-serif">📊 Net Profit</div>
+      <div class="sum-value" style="color:${tN>=0?'#1565c0':'#c62828'}">${fmtNum(Math.abs(tN))}</div>
+      <div class="sum-unit" style="font-family:'Poppins',sans-serif">${tN>=0?'SAR':'Deficit'}</div>
+    </div>
+    <div class="sum-card share1">
+      <div class="sum-label" style="font-family:'Poppins',sans-serif">👤 Your Share (1/3)</div>
+      <div class="sum-value">${fmtNum(d)}</div>
+      <div class="sum-unit" style="font-family:'Poppins',sans-serif">SAR</div>
+    </div>
+    <div class="sum-card share2">
+      <div class="sum-label" style="font-family:'Poppins',sans-serif">🏢 Company (2/3)</div>
+      <div class="sum-value">${fmtNum(c)}</div>
+      <div class="sum-unit" style="font-family:'Poppins',sans-serif">SAR</div>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <div class="table-title" style="font-family:'Poppins',sans-serif">📋 Transaction Details</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="text-align:left;font-family:'Poppins',sans-serif">📅 Date & Time</th>
+          <th style="text-align:center;font-family:'Poppins',sans-serif">📝 Details</th>
+          <th style="text-align:center;font-family:'Poppins',sans-serif">💵 Amount</th>
+          <th style="text-align:center;font-family:'Poppins',sans-serif">Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsEn||emptyMsgEn}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer-section" style="font-family:'Poppins',sans-serif">
+    <div>🏦 Hesab Al-Safi — Monthly Report for ${monthNameEn}</div>
+    <div style="margin-top:4px;font-size:10px">Hesab Al-Safi App © 2026 — All Rights Reserved</div>
+  </div>
+  <div class="bottom-bar"></div>
+</div>
+
+<script>
+  window.onload=function(){
+    setTimeout(function(){window.print();},800);
+  };
+<\/script>
+</body>
+</html>`;
+
+    const win=window.open('','_blank','width=900,height=700');
+    if(!win){showToast('⚠️ يرجى السماح بالنوافذ المنبثقة','linear-gradient(135deg,#e65100,#bf360c)');return;}
+    win.document.write(html);
+    win.document.close();
+    showToast('🖨️ جاري فتح التقرير...','linear-gradient(135deg,#2e7d32,#388e3c)');
+  }catch(e){console.error(e);showToast('❌ خطأ في التقرير','linear-gradient(135deg,#c62828,#b71c1c)');}
+}
+
+function exportRecordPDF(id){
+  const recs=typeof allRecords!=='undefined'?allRecords:getRecords();
+  const r=recs.find(x=>x.id===id);if(!r)return;
+  try{
+    const isIncome=r.type==='income';
+    const det=r.detail?r.catAr+' - '+r.detail:r.catAr;
+    const fmtNum=(n)=>n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const fmtAr=(n)=>n.toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const headerColor=isIncome?'linear-gradient(135deg,#2e7d32,#43a047)':'linear-gradient(135deg,#c62828,#e53935)';
+    const now=new Date();
+
+    const html=`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>سجل المعاملة - Transaction Record</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Cairo',sans-serif;background:#f7f3ec}
+    .receipt{width:180mm;min-height:220mm;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1)}
+    .receipt-header{background:${headerColor};padding:28px 24px;text-align:center;color:white}
+    .receipt-icon{font-size:48px;margin-bottom:10px;display:block}
+    .receipt-type{font-size:22px;font-weight:900;margin-bottom:4px}
+    .receipt-id{font-size:11px;opacity:0.8;background:rgba(255,255,255,0.2);padding:4px 14px;border-radius:20px;display:inline-block}
+    .receipt-body{padding:24px}
+    .amount-box{background:${isIncome?'linear-gradient(135deg,#e8f5e9,#f1f8e9)':'linear-gradient(135deg,#ffebee,#fff5f5)'};border:2px solid ${isIncome?'#a5d6a7':'#ef9a9a'};border-radius:16px;padding:20px;text-align:center;margin-bottom:20px}
+    .amount-label{font-size:11px;font-weight:700;color:#9e8c72;margin-bottom:6px}
+    .amount-value{font-size:36px;font-weight:900;direction:ltr;color:${isIncome?'#2e7d32':'#c62828'};line-height:1}
+    .amount-unit{font-size:14px;font-weight:700;color:#9e8c72;margin-top:4px}
+    .info-box{background:#fffcf2;border:1px solid #e8d9b0;border-radius:14px;padding:16px;margin-bottom:16px}
+    .info-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #f0e8cc}
+    .info-row:last-child{border-bottom:none}
+    .info-key{font-size:12px;color:#9e8c72;font-weight:600}
+    .info-val{font-size:13px;font-weight:700;color:#3a2e1e;text-align:left}
+    .footer-note{text-align:center;font-size:11px;color:#9e8c72;padding:16px 0 8px;border-top:1px solid #f0e8cc}
+    .gold-bar{height:4px;background:linear-gradient(90deg,#b8860b,#d4a017,#f0c040,#d4a017,#b8860b)}
+    @media print{body{background:white}.receipt{box-shadow:none;margin:0;width:100%;border-radius:0}}
+  </style>
+</head>
+<body>
+<div class="gold-bar"></div>
+<div class="receipt" dir="rtl">
+  <div class="receipt-header">
+    <span class="receipt-icon">${isIncome?'💰':'📤'}</span>
+    <div class="receipt-type">${isIncome?'سجل دخل / إيراد':'سجل مصروف'}</div>
+    <div class="receipt-id">رقم المعرف: #${r.id}</div>
+  </div>
+  <div class="receipt-body">
+    <div class="amount-box">
+      <div class="amount-label">${isIncome?'💵 المبلغ المستلم':'💸 المبلغ المصروف'}</div>
+      <div class="amount-value">${fmtAr(r.amount)}</div>
+      <div class="amount-unit">ريال سعودي (SAR)</div>
+    </div>
+    <div class="info-box">
+      <div class="info-row">
+        <span class="info-key">📅 التاريخ</span>
+        <span class="info-val">${r.date}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">🕐 الوقت</span>
+        <span class="info-val">${r.time||'-'}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">🏷️ التصنيف</span>
+        <span class="info-val">${det}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">📊 النوع</span>
+        <span class="info-val" style="color:${isIncome?'#2e7d32':'#c62828'};font-weight:800">${isIncome?'دخل / إيراد':'مصروف'}</span>
+      </div>
+      ${r.detail?`<div class="info-row"><span class="info-key">📝 ملاحظات</span><span class="info-val">${r.detail}</span></div>`:''}
+    </div>
+    <div class="info-box" dir="ltr" style="direction:ltr;text-align:left;font-family:'Poppins','Cairo',sans-serif">
+      <div class="info-row">
+        <span class="info-key">Type</span>
+        <span class="info-val" style="color:${isIncome?'#2e7d32':'#c62828'};font-weight:800">${isIncome?'Income':'Expense'}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Amount</span>
+        <span class="info-val">${fmtNum(r.amount)} SAR</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Category</span>
+        <span class="info-val">${det}</span>
+      </div>
+    </div>
+  </div>
+  <div class="footer-note">
+    🏦 حساب الصافي والأنصبة — Hesab Al-Safi App © 2026
+  </div>
+</div>
+<div class="gold-bar"></div>
+<script>window.onload=function(){setTimeout(function(){window.print();},800);}<\/script>
+</body>
+</html>`;
+
+    const win=window.open('','_blank','width=750,height=650');
+    if(!win){showToast('⚠️ يرجى السماح بالنوافذ المنبثقة','linear-gradient(135deg,#e65100,#bf360c)');return;}
+    win.document.write(html);
+    win.document.close();
+    showToast('📄 جاري فتح السجل...','linear-gradient(135deg,#2e7d32,#388e3c)');
+  }catch(e){console.error(e);}
+}
+
+
+/* ===== INIT ===== */
+updateBadge(); updateTopSummary(); updateMonthTotals();
+
+/* ===== PWA ===== */
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('installBanner').classList.add('show');
+});
+function installApp(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('installBanner').classList.remove('show');});
+  }
+}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+document.addEventListener('keydown',(e)=>{if(e.key==='Enter')addEntry();});
+</script>
+<script src="https://adsmaiay1440-max.github.io/for-test/hesab_v6_enhance.js"></script>
+
+
+
+<script>
+/* ===== PATCH: delete confirm + company settlement ===== */
+(function(){
+  const COMPANY_SETTLEMENTS_KEY='hesab_v3_company_settlements';
+  const STORAGE_PREFIX=(typeof loadFromFirebase==='function')?'hesab_auth_v6':'hesab_light_v6';
+  const SAVED_LOCATIONS_KEY=STORAGE_PREFIX+'_saved_locations';
+  const state={undo:null};
+
+  function fmtNum(n){
+    return Number(n||0).toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function parseMoney(text){
+    const map={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
+    const normalized=String(text||'')
+      .replace(/[٠-٩]/g,ch=>map[ch]||ch)
+      .replace(/٬/g,'')
+      .replace(/,/g,'')
+      .replace(/٫/g,'.')
+      .replace(/[^0-9.\-]/g,'');
+    const val=parseFloat(normalized);
+    return isNaN(val)?0:val;
+  }
+  function escapeHtml(str){
+    return String(str||'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
+  function getMonthKey(d){return d.getFullYear()+'-'+(d.getMonth()+1)}
+  function getCompanySettlements(){
+    try{return JSON.parse(localStorage.getItem(COMPANY_SETTLEMENTS_KEY)||'[]')}catch(_){return[]}
+  }
+  function saveCompanySettlements(arr){
+    localStorage.setItem(COMPANY_SETTLEMENTS_KEY,JSON.stringify(arr||[]));
+  }
+  function getSavedLocationsPatched(){
+    try{return JSON.parse(localStorage.getItem(SAVED_LOCATIONS_KEY)||'[]')}catch(_){return[]}
+  }
+  function saveSavedLocationsPatched(list){
+    const cleaned=Array.from(new Set((list||[]).map(v=>String(v||'').trim()).filter(Boolean)));
+    cleaned.sort((a,b)=>a.localeCompare(b,'ar'));
+    localStorage.setItem(SAVED_LOCATIONS_KEY,JSON.stringify(cleaned));
+    renderSavedLocationsPatched();
+  }
+  function normalizeArabicDigits(str){
+    return String(str||'').replace(/[٠-٩]/g,ch=>({'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'})[ch]||ch);
+  }
+  function deriveMonthKeyFromDateText(text){
+    const monthMap={
+      'يناير':1,'فبراير':2,'مارس':3,'أبريل':4,'ابريل':4,'مايو':5,'يونيو':6,'يوليو':7,
+      'أغسطس':8,'اغسطس':8,'سبتمبر':9,'أكتوبر':10,'اكتوبر':10,'نوفمبر':11,'ديسمبر':12
+    };
+    const clean=normalizeArabicDigits(String(text||'').replace('🕐','')).trim();
+    const m=clean.match(/(\d{1,2})\s+([^\s]+)\s+(\d{4})/);
+    if(!m) return getMonthKey(new Date());
+    const month=monthMap[m[2]];
+    return month?`${m[3]}-${month}`:getMonthKey(new Date());
+  }
+  function seedSavedLocationsFromDom(){
+    if(getSavedLocationsPatched().length) return;
+    const names=Array.from(document.querySelectorAll('#savedLocations [data-name]')).map(el=>String(el.getAttribute('data-name')||'').trim()).filter(Boolean);
+    if(names.length){
+      localStorage.setItem(SAVED_LOCATIONS_KEY,JSON.stringify(Array.from(new Set(names))));
+    }
+  }
+  function seedRecordsFromSnapshot(){
+    if(typeof getRecords!=='function' || typeof saveRecords!=='function') return;
+    const existing=getRecords();
+    if(existing && existing.length) return;
+    const nodes=Array.from(document.querySelectorAll('#historyList > .record-item[id^="rec-"]'));
+    if(!nodes.length) return;
+    const seeded=nodes.map((node,idx)=>{
+      const idRaw=String(node.id||'').replace('rec-','');
+      const dateLine=String((node.querySelector('.rec-date')||{}).textContent||'').replace('🕐','').trim();
+      const amount=parseMoney((node.querySelector('.rec-amount')||{}).textContent||'0');
+      const catText=String((node.querySelector('.rec-cat')||{}).textContent||'').trim();
+      const type=node.classList.contains('income-rec')?'income':'expense';
+      let datePart=dateLine,timePart='';
+      if(dateLine.includes('—')){
+        const parts=dateLine.split('—');
+        datePart=String(parts[0]||'').trim();
+        timePart=String(parts.slice(1).join('—')||'').trim();
+      }
+      const rec={
+        id:Number(idRaw)||Date.now()+idx,
+        type:type,
+        cat:type==='income'?'income':'other',
+        catLabel:catText,
+        catAr:catText,
+        detail:'',
+        amount:amount,
+        date:datePart,
+        time:timePart,
+        month:deriveMonthKeyFromDateText(dateLine)
+      };
+      if(type==='income' && catText.includes('—')){
+        rec.location=String(catText.split('—').slice(1).join('—')||'').trim();
+      }
+      if(type==='expense'){
+        if(catText.includes('بشير')) rec.expenseGroup='basheer';
+        else if(catText.includes('فتحي') || catText.includes('معيشة') || catText.includes('احتياجات البيت') || catText.includes('احتياجات خاصة')) rec.expenseGroup='fathi';
+        else rec.expenseGroup='car';
+      }
+      return rec;
+    }).filter(r=>Number(r.amount||0)>0);
+    if(seeded.length) saveRecords(seeded);
+  }
+  function renderSavedLocationsPatched(){
+    const list=getSavedLocationsPatched();
+    const dataList=document.getElementById('incomeLocationList');
+    const wrap=document.getElementById('savedLocations');
+    const input=document.getElementById('incomeLocationInput');
+    if(dataList){
+      dataList.innerHTML=list.map(v=>`<option value="${escapeHtml(v)}"></option>`).join('');
+    }
+    if(wrap){
+      wrap.innerHTML=list.length?list.map(v=>`<span class="loc-chip" data-name="${escapeHtml(v)}"><span class="loc-text">${escapeHtml(v)}</span><button type="button" data-remove="${escapeHtml(v)}">×</button></span>`).join(''):'<small style="color:var(--muted)">مفيش أماكن محفوظة لسه.</small>';
+    }
+    if(input && !input.value && list[0]) input.placeholder=`مثال: ${list[0]}`;
+  }
+  function getCurrentMonthPaid(){
+    const cm=typeof getViewedMonthKey==='function'?getViewedMonthKey():getMonthKey(new Date());
+    return getCompanySettlements().filter(r=>r.month===cm).reduce((sum,r)=>sum+Number(r.amount||0),0);
+  }
+  function getCompanyGrossFromDom(){
+    const el=document.getElementById('companyGrossAmount');
+    const top=document.getElementById('topCompany');
+    if(el && el.dataset.grossValue){
+      const val=parseFloat(el.dataset.grossValue);
+      if(!isNaN(val)) return val;
+    }
+    return top?parseMoney(top.textContent):0;
+  }
+  function syncCompanySettlementUI(){
+    const topCompany=document.getElementById('topCompany');
+    const topNote=document.getElementById('topCompanyNote');
+    if(!topCompany) return;
+    const gross=parseMoney(topCompany.textContent);
+    const paid=getCurrentMonthPaid();
+    const remaining=gross-paid;
+    const grossEl=document.getElementById('companyGrossAmount');
+    const paidEl=document.getElementById('companyPaidAmount');
+    const remainEl=document.getElementById('companyRemainingAmount');
+    if(grossEl){grossEl.textContent=fmtNum(gross);grossEl.dataset.grossValue=String(gross)}
+    if(paidEl) paidEl.textContent=fmtNum(paid);
+    if(remainEl) remainEl.textContent=(remaining<0?'-':'')+fmtNum(Math.abs(remaining));
+    topCompany.textContent=(remaining<0?'-':'')+fmtNum(Math.abs(remaining));
+    topCompany.classList.toggle('negative-share',remaining<0);
+    if(topNote){
+      topNote.textContent=remaining<0
+        ? `تم التسليم بزيادة ${fmtNum(Math.abs(remaining))} ريال — المسدد ${fmtNum(paid)} ريال`
+        : `تم تسليمه ${fmtNum(paid)} ريال من إجمالي ${fmtNum(gross)} ريال`;
+    }
+    const histPaid=document.getElementById('companyHistoryPaidCurrent');
+    const histRemain=document.getElementById('companyHistoryRemainingCurrent');
+    if(histPaid) histPaid.textContent=fmtNum(paid);
+    if(histRemain){
+      histRemain.textContent=(remaining<0?'-':'')+fmtNum(Math.abs(remaining));
+      histRemain.className='msm-value '+(remaining<0?'red':'gold');
+    }
+    const histCount=document.getElementById('companyHistoryCount');
+    if(histCount){
+      const cm=typeof getViewedMonthKey==='function'?getViewedMonthKey():getMonthKey(new Date());
+      histCount.textContent=String(getCompanySettlements().filter(r=>r.month===cm).length).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+    }
+  }
+
+  function openConfirmDialog(title,message,onConfirm,confirmText){
+    const overlay=document.getElementById('confirmOverlay');
+    const ttl=document.getElementById('confirmTitle');
+    const msg=document.getElementById('confirmMessage');
+    const ok=document.getElementById('confirmOkBtn');
+    const cancel=document.getElementById('confirmCancelBtn');
+    if(!overlay||!ttl||!msg||!ok||!cancel){ if(typeof onConfirm==='function') onConfirm(); return; }
+    ttl.textContent=title||'تأكيد الحذف';
+    msg.textContent=message||'هل أنت متأكد؟';
+    ok.textContent=confirmText||'تأكيد الحذف';
+    const close=()=>{overlay.classList.remove('show');overlay.setAttribute('aria-hidden','true');ok.onclick=null;cancel.onclick=null;};
+    ok.onclick=()=>{close();if(typeof onConfirm==='function') onConfirm();};
+    cancel.onclick=close;
+    overlay.onclick=(e)=>{if(e.target===overlay) close();};
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden','false');
+  }
+
+  function showUndoBar(message,onUndo,onFinalize){
+    const bar=document.getElementById('undoBar');
+    const text=document.getElementById('undoText');
+    const btn=document.getElementById('undoBtn');
+    if(!bar||!text||!btn){ if(typeof onFinalize==='function') onFinalize(); return; }
+    if(state.undo){
+      clearTimeout(state.undo.timer);
+      if(typeof state.undo.finalize==='function') state.undo.finalize();
+      state.undo=null;
+    }
+    text.textContent=message;
+    btn.onclick=()=>{
+      if(!state.undo) return;
+      clearTimeout(state.undo.timer);
+      const restore=state.undo.restore;
+      state.undo=null;
+      bar.classList.remove('show');
+      if(typeof restore==='function') restore();
+    };
+    bar.classList.add('show');
+    state.undo={
+      restore:onUndo,
+      finalize:onFinalize,
+      timer:setTimeout(()=>{
+        bar.classList.remove('show');
+        const current=state.undo;
+        state.undo=null;
+        if(current && typeof current.finalize==='function') current.finalize();
+      },5000)
+    };
+  }
+
+  const originalUpdateTopSummary=typeof window.updateTopSummary==='function'?window.updateTopSummary.bind(window):null;
+  const originalUpdateMonthTotals=typeof window.updateMonthTotals==='function'?window.updateMonthTotals.bind(window):null;
+  const originalRenderHistory=typeof window.renderHistory==='function'?window.renderHistory.bind(window):null;
+  const originalSwitchTab=typeof window.switchTab==='function'?window.switchTab.bind(window):null;
+  const originalClearValue=typeof window.clearValue==='function'?window.clearValue.bind(window):null;
+
+  window.updateTopSummary=function(){
+    if(originalUpdateTopSummary) originalUpdateTopSummary();
+    syncCompanySettlementUI();
+  };
+  window.updateMonthTotals=function(){
+    if(originalUpdateMonthTotals) originalUpdateMonthTotals();
+    syncCompanySettlementUI();
+  };
+  function renderCompanySettlementHistory(){
+    const wrap=document.getElementById('companySettlementHistory');
+    if(!wrap) return;
+    const list=getCompanySettlements().slice().sort((a,b)=>Number(b.id)-Number(a.id));
+    if(!list.length){
+      wrap.innerHTML='<div class="company-history-empty">لا توجد عمليات تسليم مسجلة حتى الآن.</div>';
+      syncCompanySettlementUI();
+      return;
+    }
+    wrap.innerHTML=list.map(r=>`<div class="record-item settlement-record" id="stl-${r.id}"><div class="rec-header"><div class="rec-left"><div class="rec-date">🕐 ${escapeHtml(r.date||'')} — ${escapeHtml(r.time||'')}</div><div class="rec-cat">🏢 تسليم نصيب الشركة${r.note?` — ${escapeHtml(r.note)}`:''}</div></div><div class="rec-right"><div><div class="rec-amount">${fmtNum(r.amount)}</div><span class="rec-type-badge settlement-badge">تسليم</span></div><div class="rec-del" onclick="deleteCompanySettlement(${r.id})">🗑️</div></div></div></div>`).join('');
+    syncCompanySettlementUI();
+  }
+  window.renderHistory=function(){
+    if(originalRenderHistory) originalRenderHistory();
+    renderCompanySettlementHistory();
+    syncCompanySettlementUI();
+  };
+  window.switchTab=function(tab){
+    if(originalSwitchTab) originalSwitchTab(tab);
+    if(tab==='history'){
+      renderCompanySettlementHistory();
+    }
+    syncCompanySettlementUI();
+  };
+
+  function refreshAllViews(){
+    if(typeof window.updateTopSummary==='function') window.updateTopSummary();
+    if(typeof window.updateMonthTotals==='function') window.updateMonthTotals();
+    if(typeof window.renderHistory==='function') window.renderHistory();
+    renderSavedLocationsPatched();
+  }
+
+  window.addCompanySettlement=function(){
+    const input=document.getElementById('companySettlementInput');
+    const amount=parseFloat(input?input.value:'');
+    if(isNaN(amount)||amount<=0){
+      showToast('⚠️ اكتب مبلغ تسليم صحيح أكبر من صفر','linear-gradient(135deg,#e65100,#bf360c)');
+      return;
+    }
+    const now=new Date();
+    const record={
+      id:Date.now(),
+      amount:amount,
+      date:now.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'}),
+      time:now.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+      month:getMonthKey(now),
+      note:'',
+      kind:'company_settlement'
+    };
+    const list=getCompanySettlements();
+    list.unshift(record);
+    saveCompanySettlements(list);
+    if(input) input.value='';
+    refreshAllViews();
+    showToast('🏢 تم تسجيل تسليم نصيب الشركة','linear-gradient(135deg,#6a1b9a,#7b1fa2)');
+  };
+
+  function deleteCompanySettlementNow(id){
+    const list=getCompanySettlements();
+    const idx=list.findIndex(r=>String(r.id)===String(id));
+    if(idx<0) return;
+    const removed=list[idx];
+    list.splice(idx,1);
+    saveCompanySettlements(list);
+    refreshAllViews();
+    showToast('🗑️ تم حذف عملية التسليم','linear-gradient(135deg,#e53935,#b71c1c)');
+    showUndoBar('تم حذف عملية تسليم نصيب الشركة — الاستعادة متاحة لمدة 5 ثوانٍ',()=>{
+      const restored=getCompanySettlements();
+      restored.splice(idx,0,removed);
+      saveCompanySettlements(restored);
+      refreshAllViews();
+      showToast('↩️ تمت الاستعادة','linear-gradient(135deg,#2e7d32,#388e3c)');
+    },()=>{});
+  }
+  window.deleteCompanySettlement=function(id){
+    openConfirmDialog('تأكيد الحذف','هل تريد حذف عملية تسليم نصيب الشركة؟',()=>deleteCompanySettlementNow(id),'تأكيد الحذف');
+  };
+
+  window.deleteRecord=function(id){
+    openConfirmDialog('تأكيد الحذف','هل تريد حذف هذا السجل؟ يمكنك استعادته خلال 5 ثوانٍ بعد الحذف.',()=>{
+      const records=(typeof getRecords==='function'?getRecords():[]).slice();
+      const idx=records.findIndex(r=>String(r.id)===String(id));
+      if(idx<0) return;
+      const removed=records[idx];
+      records.splice(idx,1);
+      if(typeof saveRecords==='function') saveRecords(records);
+      refreshAllViews();
+      showToast('🗑️ تم حذف السجل','linear-gradient(135deg,#e53935,#b71c1c)');
+      showUndoBar('تم حذف السجل — الاستعادة متاحة لمدة 5 ثوانٍ',()=>{
+        const restored=(typeof getRecords==='function'?getRecords():[]).slice();
+        restored.splice(idx,0,removed);
+        if(typeof saveRecords==='function') saveRecords(restored);
+        refreshAllViews();
+        showToast('↩️ تمت الاستعادة','linear-gradient(135deg,#2e7d32,#388e3c)');
+      },()=>{});
+    },'تأكيد الحذف');
+  };
+
+  window.clearAllRecords=function(){
+    const recs=typeof getRecords==='function'?getRecords():[];
+    const settlements=getCompanySettlements();
+    if(!recs.length && !settlements.length) return;
+    openConfirmDialog('تأكيد المسح','هل تريد مسح جميع السجلات وعمليات تسليم الشركة؟ يمكنك الاستعادة خلال 5 ثوانٍ.',()=>{
+      const backup={records:recs.slice(),settlements:settlements.slice()};
+      if(typeof saveRecords==='function') saveRecords([]);
+      saveCompanySettlements([]);
+      refreshAllViews();
+      showToast('🗑️ تم مسح جميع السجلات','linear-gradient(135deg,#e53935,#b71c1c)');
+      showUndoBar('تم مسح جميع السجلات — الاستعادة متاحة لمدة 5 ثوانٍ',()=>{
+        if(typeof saveRecords==='function') saveRecords(backup.records);
+        saveCompanySettlements(backup.settlements);
+        refreshAllViews();
+        showToast('↩️ تمت الاستعادة','linear-gradient(135deg,#2e7d32,#388e3c)');
+      },()=>{});
+    },'تأكيد المسح');
+  };
+
+  window.resetAllData=function(){
+    const recs=typeof getRecords==='function'?getRecords():[];
+    const settlements=getCompanySettlements();
+    const locations=getSavedLocationsPatched();
+    openConfirmDialog('تأكيد المسح','هل تريد مسح جميع البيانات بالكامل؟ يشمل السجلات وعمليات التسليم والأماكن المحفوظة، ويمكن الاستعادة خلال 5 ثوانٍ.',()=>{
+      const backup={records:recs.slice(),settlements:settlements.slice(),locations:locations.slice()};
+      if(typeof saveRecords==='function') saveRecords([]);
+      saveCompanySettlements([]);
+      saveSavedLocationsPatched([]);
+      if(originalClearValue) originalClearValue();
+      refreshAllViews();
+      showToast('🔄 تم مسح جميع البيانات','linear-gradient(135deg,#757575,#424242)');
+      showUndoBar('تم مسح جميع البيانات — الاستعادة متاحة لمدة 5 ثوانٍ',()=>{
+        if(typeof saveRecords==='function') saveRecords(backup.records);
+        saveCompanySettlements(backup.settlements);
+        saveSavedLocationsPatched(backup.locations);
+        refreshAllViews();
+        showToast('↩️ تمت الاستعادة','linear-gradient(135deg,#2e7d32,#388e3c)');
+      },()=>{});
+    },'تأكيد المسح');
+  };
+
+  function deleteSavedLocationNow(name){
+    const current=getSavedLocationsPatched();
+    const idx=current.indexOf(name);
+    if(idx<0) return;
+    const removed=current[idx];
+    current.splice(idx,1);
+    saveSavedLocationsPatched(current);
+    showToast('🗑️ تم حذف المكان المحفوظ','linear-gradient(135deg,#e53935,#b71c1c)');
+    showUndoBar('تم حذف المكان المحفوظ — الاستعادة متاحة لمدة 5 ثوانٍ',()=>{
+      const restored=getSavedLocationsPatched();
+      restored.splice(idx,0,removed);
+      saveSavedLocationsPatched(restored);
+      showToast('↩️ تمت الاستعادة','linear-gradient(135deg,#2e7d32,#388e3c)');
+    },()=>{});
+  }
+
+  document.addEventListener('click',function(e){
+    const removeBtn=e.target.closest('[data-remove]');
+    if(removeBtn){
+      e.preventDefault();
+      e.stopPropagation();
+      if(typeof e.stopImmediatePropagation==='function') e.stopImmediatePropagation();
+      const name=removeBtn.getAttribute('data-remove')||'';
+      openConfirmDialog('تأكيد الحذف',`هل تريد حذف المكان المحفوظ "${name}"؟`,()=>deleteSavedLocationNow(name),'تأكيد الحذف');
+      return;
+    }
+    const chip=e.target.closest('.loc-chip');
+    if(chip && !e.target.closest('[data-remove]')){
+      const name=chip.getAttribute('data-name');
+      const input=document.getElementById('incomeLocationInput');
+      if(input && name){input.value=name;input.focus();}
+    }
+  },true);
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Enter' && e.target && e.target.id==='companySettlementInput'){
+      e.preventDefault();
+      window.addCompanySettlement();
+    }
+  },true);
+
+  seedSavedLocationsFromDom();
+  seedRecordsFromSnapshot();
+  renderSavedLocationsPatched();
+  refreshAllViews();
+})();
+</script>
+
+
+<style id="record-edit-patch-v1">
+  .date-time-card{margin:12px 0 6px;padding:12px 14px;border:1px solid rgba(150,120,80,.16);border-radius:16px;background:linear-gradient(180deg,#fffdf9,#f6efe4)}
+  .date-time-title{font-size:13px;font-weight:800;color:#5b4630;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .date-time-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center}
+  .date-time-grid input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--border,#d8cbb6);background:#fff;font-family:'Cairo',sans-serif;color:#3d2d1e;font-size:14px}
+  .date-time-grid .mini-btn{white-space:nowrap;height:44px}
+  .edit-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:none;border-radius:12px;background:linear-gradient(135deg,#fff3e0,#ffe0b2);color:#8d4f00;cursor:pointer;font-size:16px;margin-inline-end:8px;box-shadow:0 6px 14px rgba(141,79,0,.12)}
+  .edit-btn:hover{transform:translateY(-1px)}
+  .record-actions{display:flex;align-items:center}
+  .editor-overlay{position:fixed;inset:0;background:rgba(28,19,8,.45);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999}
+  .editor-overlay.show{display:flex}
+  .editor-card{width:min(520px,100%);background:#fffdf9;border-radius:24px;box-shadow:0 20px 50px rgba(0,0,0,.18);padding:18px;border:1px solid rgba(120,90,52,.12)}
+  .editor-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .editor-title{font-size:19px;font-weight:900;color:#4a3621}
+  .editor-close{border:none;background:#f4eadc;color:#7a5a37;width:38px;height:38px;border-radius:12px;cursor:pointer;font-size:18px}
+  .editor-body{display:grid;gap:12px}
+  .editor-field label{display:block;font-size:13px;font-weight:800;color:#6d5436;margin-bottom:6px}
+  .editor-field input,.editor-field textarea{width:100%;padding:12px 13px;border-radius:14px;border:1px solid var(--border,#d8cbb6);background:#fff;font-family:'Cairo',sans-serif;color:#3b2c1d;font-size:14px}
+  .editor-field textarea{min-height:92px;resize:vertical}
+  .editor-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+  .editor-actions button{border:none;border-radius:14px;padding:12px 16px;font-family:'Cairo',sans-serif;font-weight:800;cursor:pointer}
+  .editor-save{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff}
+  .editor-cancel{background:#efe4d3;color:#6c4b24}
+  @media (max-width:640px){
+    .date-time-grid{grid-template-columns:1fr}
+    .editor-actions{flex-direction:column-reverse}
+    .editor-actions button{width:100%}
+  }
+</style>
+
+<div class="editor-overlay" id="recordEditorOverlay" aria-hidden="true">
+  <div class="editor-card" role="dialog" aria-modal="true" aria-labelledby="recordEditorTitle">
+    <div class="editor-head">
+      <div class="editor-title" id="recordEditorTitle">تعديل السجل</div>
+      <button type="button" class="editor-close" id="recordEditorCloseBtn">✕</button>
+    </div>
+    <div class="editor-body">
+      <div class="editor-field">
+        <label for="recordEditorAmount">المبلغ</label>
+        <input type="number" id="recordEditorAmount" min="0" step="0.01" inputmode="decimal">
+      </div>
+      <div class="editor-field">
+        <label for="recordEditorText">الوصف / المكان / الملاحظات</label>
+        <textarea id="recordEditorText" maxlength="180" placeholder="اكتب التعديل المطلوب"></textarea>
+      </div>
+      <div class="date-time-grid">
+        <div class="editor-field" style="margin:0">
+          <label for="recordEditorDate">التاريخ</label>
+          <input type="date" id="recordEditorDate">
+        </div>
+        <div class="editor-field" style="margin:0">
+          <label for="recordEditorTime">الوقت</label>
+          <input type="time" id="recordEditorTime">
+        </div>
+        <button type="button" class="mini-btn" id="recordEditorTodayBtn" style="align-self:end">اليوم</button>
+      </div>
+      <div class="editor-actions">
+        <button type="button" class="editor-cancel" id="recordEditorCancelBtn">إلغاء</button>
+        <button type="button" class="editor-save" id="recordEditorSaveBtn">حفظ التعديل</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const state={kind:null,id:null};
+  function pad(n){return String(n).padStart(2,'0');}
+  function nowParts(){
+    const now=new Date();
+    return {date:`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`,time:`${pad(now.getHours())}:${pad(now.getMinutes())}`};
+  }
+  function setInputsToNow(dateEl,timeEl){
+    const p=nowParts();
+    if(dateEl) dateEl.value=p.date;
+    if(timeEl) timeEl.value=p.time;
+  }
+  function parseDateTime(dateStr,timeStr){
+    const pDate=String(dateStr||'').split('-').map(Number);
+    const pTime=String(timeStr||'').split(':').map(Number);
+    if(pDate.length!==3 || pDate.some(n=>!Number.isFinite(n))) return new Date();
+    const hh=Number.isFinite(pTime[0])?pTime[0]:new Date().getHours();
+    const mm=Number.isFinite(pTime[1])?pTime[1]:new Date().getMinutes();
+    return new Date(pDate[0],(pDate[1]||1)-1,pDate[2]||1,hh,mm,0,0);
+  }
+  function fmtDateAr(dt){
+    return dt.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  }
+  function fmtTimeAr(dt){
+    return dt.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
+  }
+  function monthKey(dt){
+    return `${dt.getFullYear()}-${dt.getMonth()+1}`;
+  }
+  function extractDateTimeInputs(record){
+    const dateInput=document.getElementById('recordEditorDate');
+    const timeInput=document.getElementById('recordEditorTime');
+    const current=nowParts();
+    if(!record){
+      setInputsToNow(dateInput,timeInput);
+      return;
+    }
+    let parsed=new Date();
+    const joined=`${record.date||''} ${record.time||''}`.trim();
+    try{
+      const tryDate=new Date(joined);
+      if(!isNaN(tryDate.getTime())) parsed=tryDate;
+    }catch(_){ }
+    dateInput.value=`${parsed.getFullYear()}-${pad(parsed.getMonth()+1)}-${pad(parsed.getDate())}`;
+    timeInput.value=`${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+    if(!dateInput.value) dateInput.value=current.date;
+    if(!timeInput.value) timeInput.value=current.time;
+  }
+  function refreshViews(){
+    if(typeof window.updateTopSummary==='function') window.updateTopSummary();
+    if(typeof window.updateMonthTotals==='function') window.updateMonthTotals();
+    if(typeof window.renderHistory==='function') window.renderHistory();
+  }
+  function ensureEntryDateControls(){
+    const amountBox=document.getElementById('amountBox');
+    if(!amountBox || document.getElementById('entryDateInput')) return;
+    const card=document.createElement('div');
+    card.className='date-time-card';
+    card.innerHTML=`
+      <div class="date-time-title">📅 تحديد التاريخ والوقت للسجل</div>
+      <div class="date-time-grid">
+        <input type="date" id="entryDateInput" aria-label="تاريخ السجل">
+        <input type="time" id="entryTimeInput" aria-label="وقت السجل">
+        <button type="button" class="mini-btn" id="entryTodayBtn">اليوم</button>
+      </div>`;
+    amountBox.insertAdjacentElement('afterend',card);
+    setInputsToNow(document.getElementById('entryDateInput'),document.getElementById('entryTimeInput'));
+    document.getElementById('entryTodayBtn').addEventListener('click',()=>setInputsToNow(document.getElementById('entryDateInput'),document.getElementById('entryTimeInput')));
+  }
+  function ensureSettlementDateControls(){
+    const settlementInput=document.getElementById('companySettlementInput');
+    if(!settlementInput || document.getElementById('settlementDateInput')) return;
+    const host=settlementInput.closest('.card') || settlementInput.parentElement;
+    if(!host) return;
+    const row=document.createElement('div');
+    row.className='date-time-card';
+    row.style.marginTop='10px';
+    row.style.marginBottom='12px';
+    row.innerHTML=`
+      <div class="date-time-title">🗓️ تاريخ تسليم نصيب الشركة</div>
+      <div class="date-time-grid">
+        <input type="date" id="settlementDateInput" aria-label="تاريخ التسليم">
+        <input type="time" id="settlementTimeInput" aria-label="وقت التسليم">
+        <button type="button" class="mini-btn" id="settlementTodayBtn">اليوم</button>
+      </div>`;
+    const button=host.querySelector('.settlement-btn');
+    if(button && button.parentElement){
+      button.parentElement.insertAdjacentElement('afterend',row);
+    } else {
+      host.appendChild(row);
+    }
+    setInputsToNow(document.getElementById('settlementDateInput'),document.getElementById('settlementTimeInput'));
+    document.getElementById('settlementTodayBtn').addEventListener('click',()=>setInputsToNow(document.getElementById('settlementDateInput'),document.getElementById('settlementTimeInput')));
+  }
+  function closeEditor(){
+    const overlay=document.getElementById('recordEditorOverlay');
+    if(!overlay) return;
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden','true');
+    state.kind=null; state.id=null;
+  }
+  function openEditor(title,payload){
+    const overlay=document.getElementById('recordEditorOverlay');
+    if(!overlay) return;
+    state.kind=payload.kind;
+    state.id=payload.id;
+    document.getElementById('recordEditorTitle').textContent=title;
+    document.getElementById('recordEditorAmount').value=Number(payload.amount||0);
+    document.getElementById('recordEditorText').value=payload.text||'';
+    if(payload.dateInput) document.getElementById('recordEditorDate').value=payload.dateInput;
+    if(payload.timeInput) document.getElementById('recordEditorTime').value=payload.timeInput;
+    else extractDateTimeInputs();
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden','false');
+  }
+  function guessRecordText(r){
+    if(!r) return '';
+    if(r.type==='income') return String(r.location||r.detail||'').trim();
+    return String(r.detail||'').trim();
+  }
+  function toInputValuesFromRecord(record){
+    const current=nowParts();
+    try{
+      const dt=parseDateTime(current.date,current.time);
+      const recDate=String(record.date||'').trim();
+      const recTime=String(record.time||'').trim();
+      let date=current.date,time=current.time;
+      const m=recDate.match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+      if(m){
+        date=`${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+      }
+      if(/^[0-2]?\d:\d{2}/.test(recTime)) time=recTime.slice(0,5);
+      return {date,time};
+    }catch(_){ return current; }
+  }
+  function decorateHistory(){
+    document.querySelectorAll('#historyList .record-item[id^="rec-"]').forEach(card=>{
+      if(card.querySelector('.edit-btn[data-kind="record"]')) return;
+      const id=String(card.id||'').replace('rec-','');
+      const actions=card.querySelector('.rec-right');
+      if(!actions) return;
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='edit-btn';
+      btn.dataset.kind='record';
+      btn.title='تعديل السجل';
+      btn.textContent='✏️';
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        const records=typeof getRecords==='function'?getRecords():[];
+        const record=records.find(r=>String(r.id)===String(id));
+        if(!record) return;
+        const inp=toInputValuesFromRecord(record);
+        openEditor('تعديل السجل',{
+          kind:'record',
+          id:id,
+          amount:record.amount,
+          text:guessRecordText(record),
+          dateInput:inp.date,
+          timeInput:inp.time
+        });
+      });
+      actions.insertBefore(btn,actions.lastElementChild);
+    });
+    document.querySelectorAll('#companySettlementHistory .record-item[id^="stl-"]').forEach(card=>{
+      if(card.querySelector('.edit-btn[data-kind="settlement"]')) return;
+      const id=String(card.id||'').replace('stl-','');
+      const actions=card.querySelector('.rec-right');
+      if(!actions) return;
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='edit-btn';
+      btn.dataset.kind='settlement';
+      btn.title='تعديل التسليم';
+      btn.textContent='✏️';
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        const list=typeof getCompanySettlements==='function'?getCompanySettlements():[];
+        const record=list.find(r=>String(r.id)===String(id));
+        if(!record) return;
+        const inp=toInputValuesFromRecord(record);
+        openEditor('تعديل تسليم نصيب الشركة',{
+          kind:'settlement',
+          id:id,
+          amount:record.amount,
+          text:String(record.note||''),
+          dateInput:inp.date,
+          timeInput:inp.time
+        });
+      });
+      actions.insertBefore(btn,actions.lastElementChild);
+    });
+  }
+
+  const prevAddEntry=typeof window.addEntry==='function'?window.addEntry.bind(window):null;
+  window.addEntry=function(){
+    ensureEntryDateControls();
+    const amount=parseFloat((document.getElementById('amountInput')||{}).value);
+    const errEl=document.getElementById('errorMsg');
+    if(isNaN(amount)||amount<=0){ if(errEl) errEl.classList.add('visible'); return; }
+    if(errEl){ errEl.classList.remove('visible'); errEl.textContent='⚠️ يرجى إدخال قيمة صحيحة أكبر من صفر'; }
+    if(window.currentMode==='expense' && !window.currentCat){
+      if(errEl){ errEl.textContent='⚠️ يرجى اختيار نوع المصروف أولاً'; errEl.classList.add('visible'); }
+      return;
+    }
+    const dt=parseDateTime((document.getElementById('entryDateInput')||{}).value,(document.getElementById('entryTimeInput')||{}).value);
+    const record={
+      id:Date.now(),
+      type:window.currentMode,
+      cat:window.currentMode==='expense'?window.currentCat:'income',
+      catLabel:window.currentMode==='expense'?(window.CAT_LABELS&&window.CAT_LABELS[window.currentCat]?window.CAT_LABELS[window.currentCat]:'📤 مصروف'):'💵 دخل',
+      catAr:window.currentMode==='expense'?(window.CAT_AR&&window.CAT_AR[window.currentCat]?window.CAT_AR[window.currentCat]:'مصروف'):'إيراد عام',
+      detail:window.currentCat==='other' ? String((document.getElementById('otherDetail')||{}).value||'').trim() : '',
+      amount:amount,
+      date:fmtDateAr(dt),
+      time:fmtTimeAr(dt),
+      month:monthKey(dt)
+    };
+    const records=typeof getRecords==='function'?getRecords():[];
+    records.unshift(record);
+    if(typeof saveRecords==='function') saveRecords(records);
+    refreshViews();
+    if(typeof clearValue==='function') clearValue();
+    if(typeof showToast==='function') showToast(window.currentMode==='income'?'✅ تم تسجيل الدخل بالتاريخ المحدد':'✅ تم تسجيل المصروف بالتاريخ المحدد');
+  };
+
+  const prevAddCompanySettlement=typeof window.addCompanySettlement==='function'?window.addCompanySettlement.bind(window):null;
+  window.addCompanySettlement=function(){
+    ensureSettlementDateControls();
+    const input=document.getElementById('companySettlementInput');
+    const amount=parseFloat(input?input.value:'');
+    if(isNaN(amount)||amount<=0){
+      if(typeof showToast==='function') showToast('⚠️ اكتب مبلغ تسليم صحيح أكبر من صفر','linear-gradient(135deg,#e65100,#bf360c)');
+      return;
+    }
+    const dt=parseDateTime((document.getElementById('settlementDateInput')||{}).value,(document.getElementById('settlementTimeInput')||{}).value);
+    const record={
+      id:Date.now(),
+      amount:amount,
+      date:fmtDateAr(dt),
+      time:fmtTimeAr(dt),
+      month:monthKey(dt),
+      note:'',
+      kind:'company_settlement'
+    };
+    const list=typeof getCompanySettlements==='function'?getCompanySettlements():[];
+    list.unshift(record);
+    if(typeof saveCompanySettlements==='function') saveCompanySettlements(list);
+    if(input) input.value='';
+    refreshViews();
+    if(typeof showToast==='function') showToast('🏢 تم تسجيل التسليم بالتاريخ المحدد','linear-gradient(135deg,#6a1b9a,#7b1fa2)');
+  };
+
+  const prevRenderHistory=typeof window.renderHistory==='function'?window.renderHistory.bind(window):null;
+  window.renderHistory=function(){
+    if(prevRenderHistory) prevRenderHistory();
+    decorateHistory();
+  };
+
+  function saveEditorChanges(){
+    const amount=parseFloat(document.getElementById('recordEditorAmount').value);
+    if(isNaN(amount)||amount<=0){
+      if(typeof showToast==='function') showToast('⚠️ اكتب مبلغ صحيح أكبر من صفر','linear-gradient(135deg,#e65100,#bf360c)');
+      return;
+    }
+    const text=String(document.getElementById('recordEditorText').value||'').trim();
+    const dt=parseDateTime(document.getElementById('recordEditorDate').value,document.getElementById('recordEditorTime').value);
+    if(state.kind==='record'){
+      const records=typeof getRecords==='function'?getRecords():[];
+      const idx=records.findIndex(r=>String(r.id)===String(state.id));
+      if(idx<0) return closeEditor();
+      const rec={...records[idx]};
+      rec.amount=amount;
+      rec.date=fmtDateAr(dt);
+      rec.time=fmtTimeAr(dt);
+      rec.month=monthKey(dt);
+      if(rec.type==='income'){
+        rec.location=text;
+        rec.detail=text;
+        rec.catLabel='💵 دخل';
+        rec.catAr='إيراد عام';
+      } else {
+        rec.detail=text;
+      }
+      records[idx]=rec;
+      if(typeof saveRecords==='function') saveRecords(records);
+      refreshViews();
+      closeEditor();
+      if(typeof showToast==='function') showToast('✏️ تم تعديل السجل بنجاح','linear-gradient(135deg,#1565c0,#1e88e5)');
+      return;
+    }
+    if(state.kind==='settlement'){
+      const list=typeof getCompanySettlements==='function'?getCompanySettlements():[];
+      const idx=list.findIndex(r=>String(r.id)===String(state.id));
+      if(idx<0) return closeEditor();
+      const rec={...list[idx]};
+      rec.amount=amount;
+      rec.note=text;
+      rec.date=fmtDateAr(dt);
+      rec.time=fmtTimeAr(dt);
+      rec.month=monthKey(dt);
+      list[idx]=rec;
+      if(typeof saveCompanySettlements==='function') saveCompanySettlements(list);
+      refreshViews();
+      closeEditor();
+      if(typeof showToast==='function') showToast('✏️ تم تعديل عملية التسليم','linear-gradient(135deg,#6a1b9a,#8e24aa)');
+    }
+  }
+
+  function wireEditor(){
+    const overlay=document.getElementById('recordEditorOverlay');
+    const closeBtn=document.getElementById('recordEditorCloseBtn');
+    const cancelBtn=document.getElementById('recordEditorCancelBtn');
+    const saveBtn=document.getElementById('recordEditorSaveBtn');
+    const todayBtn=document.getElementById('recordEditorTodayBtn');
+    if(closeBtn) closeBtn.addEventListener('click',closeEditor);
+    if(cancelBtn) cancelBtn.addEventListener('click',closeEditor);
+    if(saveBtn) saveBtn.addEventListener('click',saveEditorChanges);
+    if(todayBtn) todayBtn.addEventListener('click',()=>setInputsToNow(document.getElementById('recordEditorDate'),document.getElementById('recordEditorTime')));
+    if(overlay) overlay.addEventListener('click',e=>{ if(e.target===overlay) closeEditor(); });
+  }
+
+  function init(){
+    ensureEntryDateControls();
+    ensureSettlementDateControls();
+    wireEditor();
+    decorateHistory();
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
+})();
+</script>
+
+
+<script id="record-edit-patch-v2">
+(function(){
+  const COMPANY_SETTLEMENTS_KEY='hesab_v3_company_settlements';
+  function getRecordsSafe(){try{return JSON.parse(localStorage.getItem('hesab_v3_records')||'[]')}catch(_){return[]}}
+  function saveRecordsSafe(arr){localStorage.setItem('hesab_v3_records',JSON.stringify(arr||[])); if(typeof updateBadge==='function') updateBadge();}
+  function getSettlementsSafe(){try{return JSON.parse(localStorage.getItem(COMPANY_SETTLEMENTS_KEY)||'[]')}catch(_){return[]}}
+  function saveSettlementsSafe(arr){localStorage.setItem(COMPANY_SETTLEMENTS_KEY,JSON.stringify(arr||[]));}
+  function pad(n){return String(n).padStart(2,'0');}
+  function parseDateTime(dateStr,timeStr){
+    const d=String(dateStr||'').split('-').map(Number);
+    const t=String(timeStr||'').split(':').map(Number);
+    if(d.length!==3 || d.some(n=>!Number.isFinite(n))) return new Date();
+    return new Date(d[0],(d[1]||1)-1,d[2]||1,Number.isFinite(t[0])?t[0]:0,Number.isFinite(t[1])?t[1]:0,0,0);
+  }
+  function fmtDateAr(dt){return dt.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});}
+  function fmtTimeAr(dt){return dt.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});}
+  function monthKey(dt){return `${dt.getFullYear()}-${dt.getMonth()+1}`;}
+  function refreshViews(){
+    if(typeof window.updateTopSummary==='function') window.updateTopSummary();
+    if(typeof window.updateMonthTotals==='function') window.updateMonthTotals();
+    if(typeof window.renderHistory==='function') window.renderHistory();
+  }
+  function modeFromUI(){
+    const expense=document.getElementById('expenseBtn');
+    return expense && expense.classList.contains('expense-active') ? 'expense' : 'income';
+  }
+  function activeCatBtn(){return document.querySelector('.cat-btn.cat-active');}
+  function cleanText(text){return String(text||'').replace(/\s+/g,' ').trim();}
+  function labelFromCatButton(btn){return cleanText(btn ? btn.textContent : 'مصروف');}
+  function detailsFromInputs(mode){
+    if(mode==='income') return cleanText((document.getElementById('incomeLocationInput')||{}).value||'');
+    return cleanText((document.getElementById('otherDetail')||{}).value||'');
+  }
+
+  window.addEntry=function(){
+    const amount=parseFloat((document.getElementById('amountInput')||{}).value);
+    const errEl=document.getElementById('errorMsg');
+    if(isNaN(amount)||amount<=0){ if(errEl) errEl.classList.add('visible'); return; }
+    const mode=modeFromUI();
+    const catBtn=activeCatBtn();
+    const catKey=catBtn ? String(catBtn.id||'').replace('cat-','') : null;
+    if(mode==='expense' && !catKey){
+      if(errEl){ errEl.textContent='⚠️ يرجى اختيار نوع المصروف أولاً'; errEl.classList.add('visible'); }
+      return;
+    }
+    if(errEl){ errEl.classList.remove('visible'); errEl.textContent='⚠️ يرجى إدخال قيمة صحيحة أكبر من صفر'; }
+    const dt=parseDateTime((document.getElementById('entryDateInput')||{}).value,(document.getElementById('entryTimeInput')||{}).value);
+    const detail=detailsFromInputs(mode);
+    const catLabel=mode==='income' ? '💵 دخل' : labelFromCatButton(catBtn);
+    const record={
+      id:Date.now(),
+      type:mode,
+      cat:mode==='expense' ? (catKey||'other') : 'income',
+      catLabel:catLabel,
+      catAr:mode==='income' ? 'إيراد عام' : labelFromCatButton(catBtn),
+      detail:detail,
+      amount:amount,
+      date:fmtDateAr(dt),
+      time:fmtTimeAr(dt),
+      month:monthKey(dt)
+    };
+    if(mode==='income' && detail) record.location=detail;
+    const records=getRecordsSafe();
+    records.unshift(record);
+    saveRecordsSafe(records);
+    if(typeof clearValue==='function') clearValue();
+    refreshViews();
+    if(typeof showToast==='function') showToast(mode==='income'?'✅ تم تسجيل الدخل بالتاريخ المحدد':'✅ تم تسجيل المصروف بالتاريخ المحدد');
+  };
+
+  window.addCompanySettlement=function(){
+    const input=document.getElementById('companySettlementInput');
+    const amount=parseFloat(input?input.value:'');
+    if(isNaN(amount)||amount<=0){
+      if(typeof showToast==='function') showToast('⚠️ اكتب مبلغ تسليم صحيح أكبر من صفر','linear-gradient(135deg,#e65100,#bf360c)');
+      return;
+    }
+    const dt=parseDateTime((document.getElementById('settlementDateInput')||{}).value,(document.getElementById('settlementTimeInput')||{}).value);
+    const record={id:Date.now(),amount:amount,date:fmtDateAr(dt),time:fmtTimeAr(dt),month:monthKey(dt),note:'',kind:'company_settlement'};
+    const list=getSettlementsSafe();
+    list.unshift(record);
+    saveSettlementsSafe(list);
+    if(input) input.value='';
+    refreshViews();
+    if(typeof showToast==='function') showToast('🏢 تم تسجيل التسليم بالتاريخ المحدد','linear-gradient(135deg,#6a1b9a,#7b1fa2)');
+  };
+
+  window.openSettlementEditor=function(id){
+    const list=getSettlementsSafe();
+    const rec=list.find(r=>String(r.id)===String(id));
+    if(!rec) return;
+    const amountEl=document.getElementById('recordEditorAmount');
+    const textEl=document.getElementById('recordEditorText');
+    const dateEl=document.getElementById('recordEditorDate');
+    const timeEl=document.getElementById('recordEditorTime');
+    const titleEl=document.getElementById('recordEditorTitle');
+    const overlay=document.getElementById('recordEditorOverlay');
+    if(!amountEl||!textEl||!dateEl||!timeEl||!titleEl||!overlay) return;
+    amountEl.value=Number(rec.amount||0);
+    textEl.value=String(rec.note||'');
+    titleEl.textContent='تعديل تسليم نصيب الشركة';
+    if(!dateEl.value){
+      const now=new Date();
+      dateEl.value=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+      timeEl.value=`${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    }
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden','false');
+    overlay.dataset.kind='settlement';
+    overlay.dataset.id=String(id);
+  };
+
+  const previousSaveBtn=document.getElementById('recordEditorSaveBtn');
+  if(previousSaveBtn && !previousSaveBtn.dataset.v2bound){
+    previousSaveBtn.dataset.v2bound='1';
+    previousSaveBtn.addEventListener('click',function(){
+      const overlay=document.getElementById('recordEditorOverlay');
+      if(!overlay || overlay.dataset.kind!=='settlement') return;
+      const amount=parseFloat((document.getElementById('recordEditorAmount')||{}).value);
+      if(isNaN(amount)||amount<=0) return;
+      const text=cleanText((document.getElementById('recordEditorText')||{}).value||'');
+      const dt=parseDateTime((document.getElementById('recordEditorDate')||{}).value,(document.getElementById('recordEditorTime')||{}).value);
+      const id=overlay.dataset.id;
+      const list=getSettlementsSafe();
+      const idx=list.findIndex(r=>String(r.id)===String(id));
+      if(idx<0) return;
+      list[idx]={...list[idx],amount:amount,note:text,date:fmtDateAr(dt),time:fmtTimeAr(dt),month:monthKey(dt)};
+      saveSettlementsSafe(list);
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden','true');
+      delete overlay.dataset.kind;
+      delete overlay.dataset.id;
+      refreshViews();
+      if(typeof showToast==='function') showToast('✏️ تم تعديل عملية التسليم','linear-gradient(135deg,#6a1b9a,#8e24aa)');
+    });
+  }
+
+  const prevRender=typeof window.renderHistory==='function' ? window.renderHistory.bind(window) : null;
+  window.renderHistory=function(){
+    if(prevRender) prevRender();
+    document.querySelectorAll('#companySettlementHistory .record-item[id^="stl-"]').forEach(card=>{
+      const id=String(card.id||'').replace('stl-','');
+      const actions=card.querySelector('.rec-right');
+      if(!actions || actions.querySelector('.edit-btn[data-kind="settlement-fixed"]')) return;
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='edit-btn';
+      btn.dataset.kind='settlement-fixed';
+      btn.textContent='✏️';
+      btn.title='تعديل التسليم';
+      btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();window.openSettlementEditor(id);});
+      actions.insertBefore(btn,actions.lastElementChild);
+    });
+  };
+})();
+</script>
+
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+
+
+<script id="genspark-final-fix-v1">
+(function(){
+  const GROUPS = {
+    car: {
+      label: '🚚 السيارة',
+      shortLabel: 'السيارة',
+      options: [
+        { slot:'diesel', key:'diesel', icon:'⛽', label:'ديزل', ar:'ديزل', custom:false },
+        { slot:'oil', key:'oil', icon:'🛢️', label:'زيت', ar:'زيت', custom:false },
+        { slot:'maint', key:'clean', icon:'🧽', label:'نظافة', ar:'نظافة', custom:false },
+        { slot:'other', key:'car_other', icon:'➕', label:'أخرى', ar:'أخرى السيارة', custom:true }
+      ]
+    },
+    fathi: {
+      label: '🧑 فتحي',
+      shortLabel: 'فتحي',
+      options: [
+        { slot:'diesel', key:'living', icon:'🏠', label:'المعيشة', ar:'المعيشة', custom:false },
+        { slot:'oil', key:'debts', icon:'💳', label:'ديون', ar:'ديون', custom:false },
+        { slot:'maint', key:'fathi_other', icon:'➕', label:'أخرى', ar:'أخرى فتحي', custom:true }
+      ]
+    },
+    basheer: {
+      label: '🏢 بشير',
+      shortLabel: 'بشير',
+      options: [
+        { slot:'diesel', key:'basheer_special', icon:'📝', label:'تفصيل مخصوص', ar:'تفصيل مخصوص', custom:true }
+      ]
+    }
+  };
+  const SLOT_IDS = ['diesel','oil','maint','living','other'];
+  const DEFAULT_ERROR = '⚠️ يرجى إدخال قيمة صحيحة أكبر من صفر';
+  const state = {
+    mode: 'income',
+    group: 'car',
+    cat: null,
+    catConf: null,
+    slotMap: {}
+  };
+
+  function el(id){ return document.getElementById(id); }
+  function fmt(n){ return Number(n || 0).toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function monthKey(dt){ return dt.getFullYear() + '-' + (dt.getMonth() + 1); }
+  function getRecordsSafe(){
+    try{
+      if(typeof getRecords === 'function') return getRecords() || [];
+      return JSON.parse(localStorage.getItem('hesab_v3_records') || '[]');
+    }catch(_){ return []; }
+  }
+  function saveRecordsSafe(records){
+    if(typeof saveRecords === 'function') saveRecords(records);
+    else localStorage.setItem('hesab_v3_records', JSON.stringify(records || []));
+  }
+  function syncGlobals(){
+    window.currentMode = state.mode;
+    window.currentGroup = state.group;
+    window.currentCat = state.cat;
+    window.currentCatConfig = state.catConf;
+    window.GROUP_LABELS = {
+      car: GROUPS.car.label,
+      fathi: GROUPS.fathi.label,
+      basheer: GROUPS.basheer.label
+    };
+    window.CAT_LABELS = {
+      diesel: '⛽ ديزل',
+      oil: '🛢️ زيت',
+      clean: '🧽 نظافة',
+      living: '🏠 المعيشة',
+      debts: '💳 ديون',
+      car_other: '➕ أخرى',
+      fathi_other: '➕ أخرى',
+      basheer_special: '📝 تفصيل مخصوص'
+    };
+    window.CAT_AR = {
+      diesel: 'ديزل',
+      oil: 'زيت',
+      clean: 'نظافة',
+      living: 'المعيشة',
+      debts: 'ديون',
+      car_other: 'أخرى السيارة',
+      fathi_other: 'أخرى فتحي',
+      basheer_special: 'تفصيل مخصوص'
+    };
+  }
+  function setError(message){
+    const err = el('errorMsg');
+    if(!err) return;
+    err.textContent = message || DEFAULT_ERROR;
+    err.classList.add('visible');
+  }
+  function clearError(){
+    const err = el('errorMsg');
+    if(!err) return;
+    err.textContent = DEFAULT_ERROR;
+    err.classList.remove('visible');
+  }
+  function updateCustomDetailField(){
+    const wrap = el('otherDetailWrapper');
+    const input = el('otherDetail');
+    const need = state.mode === 'expense' && state.catConf && state.catConf.custom;
+    if(wrap) wrap.classList.toggle('show', !!need);
+    if(input){
+      if(need){
+        if(state.group === 'car') input.placeholder = 'اكتب تفاصيل أخرى للسيارة...';
+        else if(state.group === 'fathi') input.placeholder = 'اكتب تفاصيل أخرى لفتحي...';
+        else input.placeholder = 'اكتب التفصيل المخصوص لبشير...';
+      } else {
+        input.value = '';
+        input.placeholder = 'اكتب التفاصيل هنا...';
+      }
+    }
+  }
+  function fixSavedLocationButtons(){
+    document.querySelectorAll('#savedLocations [data-name]').forEach(function(chip){
+      const name = String(chip.getAttribute('data-name') || '').trim();
+      const removeBtn = chip.querySelector('button[data-remove]');
+      if(removeBtn) removeBtn.setAttribute('data-remove', name);
+    });
+  }
+  function inferExpenseGroup(rec){
+    if(rec && rec.expenseGroup && GROUPS[rec.expenseGroup]) return rec.expenseGroup;
+    const text = [rec && rec.cat, rec && rec.catLabel, rec && rec.catAr, rec && rec.detail].filter(Boolean).join(' ');
+    if(/بشير/.test(text)) return 'basheer';
+    if(/فتحي|معيشة|المعيشة|ديون|دين/.test(text)) return 'fathi';
+    return 'car';
+  }
+  function selectGroup(group){
+    state.group = GROUPS[group] ? group : 'car';
+    state.cat = null;
+    state.catConf = null;
+    state.slotMap = {};
+    syncGlobals();
+    document.querySelectorAll('.expense-group-btn').forEach(function(btn){
+      btn.classList.toggle('active', btn.dataset.group === state.group);
+    });
+    const groupDef = GROUPS[state.group];
+    SLOT_IDS.forEach(function(slot){
+      const btn = el('cat-' + slot);
+      if(!btn) return;
+      const conf = groupDef.options.find(function(item){ return item.slot === slot; });
+      btn.classList.remove('cat-active', 'hidden-slot');
+      if(conf){
+        btn.style.display = 'flex';
+        btn.innerHTML = '<span class="cat-icon">' + conf.icon + '</span>' + conf.label;
+        state.slotMap[slot] = conf;
+      } else {
+        btn.style.display = 'none';
+        btn.classList.add('hidden-slot');
+      }
+    });
+    updateCustomDetailField();
+    clearError();
+  }
+  function selectCat(slotKey){
+    const conf = state.slotMap[slotKey] || null;
+    if(!conf) return;
+    state.cat = conf.key;
+    state.catConf = conf;
+    syncGlobals();
+    document.querySelectorAll('.cat-btn').forEach(function(btn){ btn.classList.remove('cat-active'); });
+    const btn = el('cat-' + slotKey);
+    if(btn) btn.classList.add('cat-active');
+    updateCustomDetailField();
+    clearError();
+  }
+  function setMode(mode){
+    state.mode = mode === 'expense' ? 'expense' : 'income';
+    state.cat = null;
+    state.catConf = null;
+    syncGlobals();
+    const incomeBtn = el('incomeBtn');
+    const expenseBtn = el('expenseBtn');
+    const catSection = el('catSection');
+    const amountBox = el('amountBox');
+    const locationWrap = el('incomeLocationWrap');
+    if(state.mode === 'income'){
+      if(incomeBtn) incomeBtn.className = 'mode-btn income-active';
+      if(expenseBtn) expenseBtn.className = 'mode-btn';
+      if(catSection) catSection.style.display = 'none';
+      if(amountBox) amountBox.className = 'amount-display-box income-mode';
+      if(locationWrap) locationWrap.style.display = 'block';
+      document.querySelectorAll('.cat-btn').forEach(function(btn){ btn.classList.remove('cat-active'); });
+      updateCustomDetailField();
+    } else {
+      if(incomeBtn) incomeBtn.className = 'mode-btn';
+      if(expenseBtn) expenseBtn.className = 'mode-btn expense-active';
+      if(catSection) catSection.style.display = 'block';
+      if(amountBox) amountBox.className = 'amount-display-box expense-mode';
+      if(locationWrap) locationWrap.style.display = 'none';
+      selectGroup('car');
+    }
+    clearError();
+  }
+  function parseSelectedDateTime(){
+    const dateValue = String((el('entryDateInput') || {}).value || '').trim();
+    const timeValue = String((el('entryTimeInput') || {}).value || '').trim();
+    if(!dateValue) return new Date();
+    const d = dateValue.split('-').map(Number);
+    const t = (timeValue || '00:00').split(':').map(Number);
+    if(d.length !== 3 || d.some(function(v){ return !Number.isFinite(v); })) return new Date();
+    return new Date(d[0], (d[1] || 1) - 1, d[2] || 1, Number.isFinite(t[0]) ? t[0] : 0, Number.isFinite(t[1]) ? t[1] : 0, 0, 0);
+  }
+  function addEntryPatched(){
+    const amount = parseFloat(String((el('amountInput') || {}).value || '').trim());
+    if(!Number.isFinite(amount) || amount <= 0){
+      setError(DEFAULT_ERROR);
+      return;
+    }
+    if(state.mode === 'expense' && (!state.catConf || !state.cat)){
+      setError('⚠️ اختر السيارة أو فتحي أو بشير ثم اختر نوع المصروف');
+      return;
+    }
+    const detailValue = String((el('otherDetail') || {}).value || '').trim();
+    if(state.mode === 'expense' && state.catConf && state.catConf.custom && !detailValue){
+      setError('⚠️ اكتب التفاصيل المطلوبة أولاً');
+      return;
+    }
+    clearError();
+    const dt = parseSelectedDateTime();
+    const record = {
+      id: Date.now(),
+      createdAt: dt.toISOString(),
+      type: state.mode,
+      amount: amount,
+      date: dt.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'}),
+      time: dt.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+      month: monthKey(dt)
+    };
+    if(state.mode === 'income'){
+      const location = String((el('incomeLocationInput') || {}).value || '').trim();
+      record.cat = 'income';
+      record.location = location;
+      record.catLabel = location ? '💵 دخل — ' + location : '💵 دخل';
+      record.catAr = location ? 'إيراد - ' + location : 'إيراد عام';
+      record.detail = '';
+    } else {
+      const groupDef = GROUPS[state.group] || GROUPS.car;
+      record.cat = state.cat;
+      record.expenseGroup = state.group;
+      record.expenseGroupLabel = groupDef.shortLabel;
+      record.catLabel = groupDef.label + ' / ' + state.catConf.icon + ' ' + state.catConf.label;
+      record.catAr = groupDef.shortLabel + ' - ' + state.catConf.ar;
+      record.detail = state.catConf.custom ? detailValue : '';
+    }
+    const records = getRecordsSafe();
+    records.unshift(record);
+    saveRecordsSafe(records);
+    if(typeof updateBadge === 'function') updateBadge();
+    if(typeof updateTopSummary === 'function') updateTopSummary();
+    if(typeof window.updateMonthTotals === 'function') window.updateMonthTotals();
+    if(typeof renderHistory === 'function') renderHistory();
+    if(typeof refreshCompanySettlementUI === 'function') refreshCompanySettlementUI();
+    clearValuePatched();
+    if(typeof showToast === 'function') showToast(state.mode === 'income' ? '✅ تم تسجيل الدخل بنجاح' : '✅ تم تسجيل المصروف بنجاح');
+  }
+  function clearValuePatched(){
+    const amountInput = el('amountInput');
+    const detailInput = el('otherDetail');
+    if(amountInput) amountInput.value = '';
+    if(detailInput) detailInput.value = '';
+    clearError();
+    updateCustomDetailField();
+  }
+  function updateMonthTotalsPatched(){
+    const records = getRecordsSafe();
+    const viewedKey = typeof getViewedMonthKey === 'function' ? getViewedMonthKey() : monthKey(new Date());
+    let income = 0, expense = 0, car = 0, fathi = 0, basheer = 0;
+    records.forEach(function(rec){
+      if(String(rec.month || '') !== String(viewedKey)) return;
+      const amount = Number(rec.amount || 0);
+      if(rec.type === 'income'){
+        income += amount;
+        return;
+      }
+      expense += amount;
+      const group = inferExpenseGroup(rec);
+      if(group === 'fathi') fathi += amount;
+      else if(group === 'basheer') basheer += amount;
+      else car += amount;
+    });
+    const monthIncome = el('monthIncome');
+    const monthExpense = el('monthExpense');
+    const breakCar = el('breakCar');
+    const breakFathi = el('breakFathi');
+    const breakBasheer = el('breakBasheer');
+    if(monthIncome) monthIncome.textContent = fmt(income);
+    if(monthExpense) monthExpense.textContent = fmt(expense);
+    if(breakCar) breakCar.textContent = fmt(car);
+    if(breakFathi) breakFathi.textContent = fmt(fathi);
+    if(breakBasheer) breakBasheer.textContent = fmt(basheer);
+  }
+  function initPatchedUI(){
+    fixSavedLocationButtons();
+    syncGlobals();
+    selectGroup('car');
+    const expenseActive = !!(el('expenseBtn') && el('expenseBtn').classList.contains('expense-active'));
+    setMode(expenseActive ? 'expense' : 'income');
+    if(typeof renderHistory === 'function') renderHistory();
+    updateMonthTotalsPatched();
+  }
+
+  window.selectGroup = selectGroup;
+  window.selectExpenseGroup = selectGroup;
+  window.selectCat = selectCat;
+  window.setMode = setMode;
+  window.addEntry = addEntryPatched;
+  window.clearValue = clearValuePatched;
+  window.updateMonthTotals = updateMonthTotalsPatched;
+  syncGlobals();
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initPatchedUI, { once:true });
+  else initPatchedUI();
+})();
+</script><!-- genspark-final-fix-v1 -->
+
+</body></html>
