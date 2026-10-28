@@ -1569,9 +1569,831 @@ function installApp(){
   }
 }
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
-document.addEventListener('keydown',(e)=>{if(e.key==='Enter')addEntry();});
+document.addEventListener('keydown',(e)=>{
+  /* Enter يضيف القيد فقط من خانة المبلغ أو خانة التفاصيل في نموذج الإضافة */
+  if(e.key!=='Enter'||e.isComposing||e.repeat)return;
+  const t=e.target;
+  if(!t||(t.id!=='amountInput'&&t.id!=='otherDetail'))return;
+  e.preventDefault();
+  addEntry();
+});
 </script>
-<script src="https://adsmaiay1440-max.github.io/for-test/hesab_v6_enhance.js"></script>
+<script id="hesab-v6-enhance-inline">
+(function(){
+  const IS_AUTH = typeof loadFromFirebase === 'function';
+  const STORAGE_PREFIX = IS_AUTH ? 'hesab_auth_v6' : 'hesab_light_v6';
+  const SLOT_IDS = ['diesel','oil','maint','living','other'];
+  const GROUPS = {
+    car: {
+      label: '🚚 السيارة',
+      shortLabel: 'السيارة',
+      colorClass: 'group-car',
+      subs: [
+        { slot:'diesel', key:'diesel', icon:'⛽', label:'ديزل', ar:'ديزل', custom:false },
+        { slot:'oil', key:'oil', icon:'🛢️', label:'زيت', ar:'زيت', custom:false },
+        { slot:'maint', key:'maint', icon:'🔧', label:'صيانة', ar:'صيانة', custom:false },
+        { slot:'living', key:'car_other', icon:'➕', label:'أخرى', ar:'أخرى السيارة', custom:true }
+      ]
+    },
+    fathi: {
+      label: '🧑 فتحي',
+      shortLabel: 'فتحي',
+      colorClass: 'group-fathi',
+      subs: [
+        { slot:'diesel', key:'living', icon:'🛏️', label:'معيشة', ar:'معيشة', custom:false },
+        { slot:'oil', key:'home', icon:'🏠', label:'احتياجات البيت', ar:'احتياجات البيت', custom:false },
+        { slot:'maint', key:'special', icon:'🎯', label:'احتياجات خاصة', ar:'احتياجات خاصة', custom:false },
+        { slot:'living', key:'fathi_other', icon:'➕', label:'أخرى', ar:'أخرى فتحي', custom:true }
+      ]
+    },
+    basheer: {
+      label: '🏢 بشير',
+      shortLabel: 'بشير',
+      colorClass: 'group-basheer',
+      subs: [
+        { slot:'diesel', key:'basheer_custom', icon:'📝', label:'تفصيل مخصص', ar:'مصروف بشير', custom:true }
+      ]
+    }
+  };
+
+  let currentExpenseGroup = readJSON('expense_group', 'car');
+  let currentCatConfig = null;
+  let currentSlotMap = {};
+  let alertTimer = null;
+  let audioCtx = null;
+
+  function readJSON(key, fallback){
+    try{
+      const raw = localStorage.getItem(`${STORAGE_PREFIX}_${key}`);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(_){ return fallback; }
+  }
+  function writeJSON(key, value){
+    localStorage.setItem(`${STORAGE_PREFIX}_${key}`, JSON.stringify(value));
+    return value;
+  }
+  function escapeHtml(str){
+    return String(str || '').replace(/[&<>\"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
+  function fmtMoney(n){
+    return Number(n || 0).toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function getAllRecordsEnhanced(){
+    try{
+      if(IS_AUTH && typeof allRecords !== 'undefined') return Array.isArray(allRecords) ? allRecords : [];
+      if(typeof getRecords === 'function') return getRecords() || [];
+      return [];
+    }catch(_){ return []; }
+  }
+  function getRecordDate(rec){
+    if(rec && rec.createdAt){
+      const d = new Date(rec.createdAt);
+      if(!isNaN(d)) return d;
+    }
+    if(rec && rec.id){
+      const d = new Date(rec.id);
+      if(!isNaN(d)) return d;
+    }
+    return new Date();
+  }
+  function inferExpenseGroup(rec){
+    if(rec.expenseGroup) return rec.expenseGroup;
+    if(rec.type !== 'expense') return '';
+    if(rec.cat === 'living') return 'fathi';
+    if(rec.cat === 'home' || rec.cat === 'special' || rec.cat === 'fathi_other') return 'fathi';
+    if(rec.cat === 'basheer_custom') return 'basheer';
+    return 'car';
+  }
+  function normalizeRecord(rec){
+    const r = Object.assign({}, rec || {});
+    if(r.type === 'income'){
+      if(r.location && !r.catLabel) r.catLabel = `💵 دخل — ${r.location}`;
+      if(r.location && !r.catAr) r.catAr = `إيراد - ${r.location}`;
+      if(!r.catLabel) r.catLabel = '💵 دخل';
+      if(!r.catAr) r.catAr = 'إيراد عام';
+      return r;
+    }
+    r.expenseGroup = inferExpenseGroup(r);
+    const g = GROUPS[r.expenseGroup] || GROUPS.car;
+    if(!r.expenseGroupLabel) r.expenseGroupLabel = g.shortLabel;
+    if(!r.catAr){
+      const det = r.detail ? ` - ${r.detail}` : '';
+      r.catAr = `${r.expenseGroupLabel}${det}`;
+    }
+    if(!r.catLabel){
+      const det = r.detail ? ` — ${r.detail}` : '';
+      r.catLabel = `${g.label}${det}`;
+    }
+    return r;
+  }
+  function calcSummary(records){
+    let income = 0, car = 0, fathi = 0, basheer = 0;
+    (records || []).map(normalizeRecord).forEach(r => {
+      const amount = Number(r.amount || 0);
+      if(r.type === 'income'){
+        income += amount;
+      } else {
+        const group = inferExpenseGroup(r);
+        if(group === 'fathi') fathi += amount;
+        else if(group === 'basheer') basheer += amount;
+        else car += amount;
+      }
+    });
+    const expense = car + fathi + basheer;
+    const operationalNet = income - car;
+    const userShare = (operationalNet / 3) - fathi;
+    const companyShare = ((operationalNet * 2) / 3) - basheer;
+    const net = userShare + companyShare;
+    return { income, expense, car, fathi, basheer, operationalNet, userShare, companyShare, net };
+  }
+  function getMonthKey(dateObj){
+    return dateObj.getFullYear() + '-' + (dateObj.getMonth() + 1);
+  }
+  function getMonthRecords(){
+    const cm = getMonthKey(new Date());
+    return getAllRecordsEnhanced().filter(r => r.month === cm);
+  }
+  function getWeekBounds(baseDate){
+    const d = new Date(baseDate || new Date());
+    d.setHours(0,0,0,0);
+    const diff = (d.getDay() + 1) % 7;
+    const start = new Date(d);
+    start.setDate(d.getDate() - diff);
+    start.setHours(0,0,0,0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23,59,59,999);
+    return { start, end };
+  }
+  function getWeekRecords(){
+    const { start, end } = getWeekBounds(new Date());
+    return getAllRecordsEnhanced().filter(r => {
+      const d = getRecordDate(r);
+      return d >= start && d <= end;
+    });
+  }
+  function formatDateRange(start, end){
+    return `${start.toLocaleDateString('ar-SA',{month:'long',day:'numeric',year:'numeric'})} — ${end.toLocaleDateString('ar-SA',{month:'long',day:'numeric',year:'numeric'})}`;
+  }
+  function ensureEnhancementStyles(){
+    if(document.getElementById('hesab-enhance-style')) return;
+    const style = document.createElement('style');
+    style.id = 'hesab-enhance-style';
+    style.textContent = `
+      .section-mini-title{font-size:13px;font-weight:800;color:var(--text2);margin-bottom:8px}
+      .expense-group-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+      .expense-group-btn{border:none;border-radius:14px;padding:10px 8px;font-family:'Cairo',sans-serif;font-size:12px;font-weight:800;cursor:pointer;transition:all .25s;border:1.5px solid var(--border);background:var(--bg);color:var(--text2)}
+      .expense-group-btn.active{transform:translateY(-1px);box-shadow:0 8px 18px rgba(0,0,0,.09)}
+      .expense-group-btn.group-car.active{background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-color:#1e88e5;color:#0d47a1}
+      .expense-group-btn.group-fathi.active{background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-color:#43a047;color:#1b5e20}
+      .expense-group-btn.group-basheer.active{background:linear-gradient(135deg,#f3e5f5,#e1bee7);border-color:#8e24aa;color:#4a148c}
+      .cat-grid.enhanced-grid{grid-template-columns:repeat(4,1fr)}
+      .cat-grid.enhanced-grid .cat-btn.hidden-slot{display:none !important}
+      .income-location-wrap{display:block;margin-bottom:14px}
+      .input-inline{display:flex;gap:8px;align-items:center}
+      .smart-input,.smart-select{width:100%;padding:12px 14px;border-radius:14px;border:1.5px solid var(--border);background:#fff;font-family:'Cairo',sans-serif;font-size:14px;color:var(--text);outline:none}
+      .smart-input:focus,.smart-select:focus{border-color:var(--gold2);box-shadow:0 0 0 3px rgba(212,160,23,.12)}
+      .mini-btn{border:none;border-radius:12px;padding:11px 14px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#fff;white-space:nowrap}
+      .mini-btn.secondary{background:linear-gradient(135deg,#78909c,#546e7a)}
+      .mini-btn.outline{background:#fff;color:var(--text2);border:1.5px solid var(--border)}
+      .saved-locations{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+      .loc-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;background:#fff8e6;border:1px solid #f0c040;border-radius:999px;font-size:12px;font-weight:700;color:#6b5a3e;cursor:pointer}
+      .loc-chip button{border:none;background:transparent;color:#c62828;font-size:14px;cursor:pointer;line-height:1}
+      .alert-card{margin-top:14px;background:linear-gradient(145deg,#fffef8,#f7f2ff)}
+      .alert-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .alert-grid .full{grid-column:1/-1}
+      .alert-note{margin-top:10px;padding:10px 12px;background:#fff7e6;border:1px solid #f3d585;border-radius:14px;color:#7a6331;font-size:12px;line-height:1.8}
+      .action-btns.enhanced-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .action-btns.enhanced-actions .action-btn{margin:0}
+      .month-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+      .break-chip{padding:8px;border-radius:14px;text-align:center;border:1px solid var(--border);background:#fff;font-size:11px}
+      .break-chip strong{display:block;font-size:13px;margin-top:4px}
+      .break-chip.car strong{color:#1565c0}.break-chip.fathi strong{color:#2e7d32}.break-chip.basheer strong{color:#8e24aa}
+      .history-filter-note{font-size:12px;color:var(--muted);margin:6px 0 10px}
+      @media (max-width:420px){
+        .expense-group-tabs{grid-template-columns:1fr}
+        .alert-grid,.action-btns.enhanced-actions{grid-template-columns:1fr}
+        .month-breakdown{grid-template-columns:1fr}
+        .input-inline{flex-direction:column}
+        .mini-btn{width:100%}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  function getSavedLocations(){
+    return readJSON('saved_locations', []);
+  }
+  function saveLocations(list){
+    const unique = Array.from(new Set((list || []).map(v => String(v || '').trim()).filter(Boolean)));
+    unique.sort((a,b)=>a.localeCompare(b,'ar'));
+    writeJSON('saved_locations', unique);
+    renderSavedLocations();
+  }
+  function addLocationToStore(name){
+    const clean = String(name || '').trim();
+    if(!clean) return;
+    const list = getSavedLocations();
+    if(!list.includes(clean)) list.unshift(clean);
+    saveLocations(list);
+  }
+  function removeLocationFromStore(name){
+    saveLocations(getSavedLocations().filter(v => v !== name));
+  }
+  function renderSavedLocations(){
+    const input = document.getElementById('incomeLocationInput');
+    const dataList = document.getElementById('incomeLocationList');
+    const wrap = document.getElementById('savedLocations');
+    const list = getSavedLocations();
+    if(dataList) dataList.innerHTML = list.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+    if(wrap){
+      wrap.innerHTML = list.length ? list.map(v => `
+        <span class="loc-chip" data-name="${escapeHtml(v)}">
+          <span class="loc-text">${escapeHtml(v)}</span>
+          <button type="button" data-remove="${escapeHtml(v)}">×</button>
+        </span>`).join('') : '<small style="color:var(--muted)">مفيش أماكن محفوظة لسه.</small>';
+    }
+    if(input && !input.value && list[0]) input.placeholder = `مثال: ${list[0]}`;
+  }
+  function ensureEnhancementUI(){
+    ensureEnhancementStyles();
+    const catSection = document.getElementById('catSection');
+    const catGrid = catSection ? catSection.querySelector('.cat-grid') : null;
+    if(catSection && catGrid && !document.getElementById('expenseGroupTabs')){
+      catGrid.classList.add('enhanced-grid');
+      catSection.insertAdjacentHTML('afterbegin', `
+        <div class="section-mini-title">🎨 اختر القسم الرئيسي للمصروف</div>
+        <div class="expense-group-tabs" id="expenseGroupTabs">
+          <button type="button" class="expense-group-btn group-car" data-group="car">🚚 السيارة</button>
+          <button type="button" class="expense-group-btn group-fathi" data-group="fathi">🧑 فتحي</button>
+          <button type="button" class="expense-group-btn group-basheer" data-group="basheer">🏢 بشير</button>
+        </div>
+        <div class="section-mini-title">🧾 نوع المصروف</div>
+      `);
+      catSection.addEventListener('click', (e)=>{
+        const btn = e.target.closest('.expense-group-btn');
+        if(btn) selectExpenseGroup(btn.dataset.group);
+      });
+    }
+    const amountBox = document.getElementById('amountBox');
+    if(amountBox && !document.getElementById('incomeLocationWrap')){
+      amountBox.insertAdjacentHTML('beforebegin', `
+        <div class="income-location-wrap" id="incomeLocationWrap">
+          <div class="section-mini-title">📍 مكان الإيراد</div>
+          <div class="input-inline">
+            <input type="text" class="smart-input" id="incomeLocationInput" list="incomeLocationList" maxlength="80" placeholder="اكتب المكان أو الجهة مثل الرياض / الدمام / مصنع بيبسي" />
+            <button type="button" class="mini-btn" id="saveLocationBtn">حفظ المكان</button>
+          </div>
+          <datalist id="incomeLocationList"></datalist>
+          <div class="saved-locations" id="savedLocations"></div>
+        </div>
+      `);
+    }
+    const actionBtns = document.querySelector('.action-btns');
+    if(actionBtns){
+      actionBtns.classList.add('enhanced-actions');
+      const printBtn = actionBtns.querySelector('.btn-print');
+      if(printBtn && !document.getElementById('weeklyReportBtn')){
+        printBtn.insertAdjacentHTML('afterend', `
+          <button class="action-btn btn-print" id="weeklyReportBtn" onclick="printWeeklyReport()">
+            <span class="btn-icon">🗓️</span>طباعة التقرير الأسبوعي
+          </button>
+        `);
+      }
+      if(!document.getElementById('alertCard')){
+        actionBtns.insertAdjacentHTML('afterend', `
+          <div class="card alert-card" id="alertCard">
+            <div class="section-mini-title">🔔 التنبيهات اليومية</div>
+            <div class="alert-grid">
+              <div class="full">
+                <label style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--text2)">
+                  <input type="checkbox" id="alertEnabled" style="width:18px;height:18px" /> تشغيل التنبيه اليومي
+                </label>
+              </div>
+              <div>
+                <div class="section-mini-title">عدد المرات</div>
+                <select class="smart-select" id="alertCount">
+                  <option value="1">مرة واحدة</option>
+                  <option value="2">مرتين</option>
+                  <option value="3">3 مرات</option>
+                </select>
+              </div>
+              <div>
+                <div class="section-mini-title">الصوت والإذن</div>
+                <button type="button" class="mini-btn secondary" id="askNotifBtn">تفعيل الإشعارات</button>
+              </div>
+              <div>
+                <div class="section-mini-title">الوقت الأول</div>
+                <input type="time" class="smart-input" id="alertTime1" value="09:00" />
+              </div>
+              <div>
+                <div class="section-mini-title">الوقت الثاني</div>
+                <input type="time" class="smart-input" id="alertTime2" value="15:00" />
+              </div>
+              <div class="full">
+                <div class="section-mini-title">الوقت الثالث</div>
+                <input type="time" class="smart-input" id="alertTime3" value="21:00" />
+              </div>
+              <div class="full">
+                <div class="section-mini-title">عنوان التنبيه</div>
+                <input type="text" class="smart-input" id="alertTitle" maxlength="60" value="تذكير إضافة البيانات" />
+              </div>
+              <div class="full">
+                <div class="section-mini-title">نص التنبيه</div>
+                <input type="text" class="smart-input" id="alertBody" maxlength="120" value="من فضلك سجل دخل ومصاريف اليوم." />
+              </div>
+              <div class="full">
+                <button type="button" class="mini-btn" id="saveAlertsBtn">حفظ إعدادات التنبيه</button>
+              </div>
+            </div>
+            <div class="alert-note">مهم: نسخة الويب بتعرض تنبيه جميل داخل المتصفح، ومع تثبيت التطبيق والسماح بالإشعارات ممكن يظهر كنوتيفيكيشن على الموبايل. لكن الظهور على شاشة القفل والصوت المخصص بشكل مضمون 100% بيعتمد على دعم المتصفح ونظام الهاتف.</div>
+          </div>
+        `);
+      }
+    }
+    const monthTotals = document.querySelector('.month-totals');
+    if(monthTotals && !document.getElementById('monthBreakdown')){
+      monthTotals.insertAdjacentHTML('afterend', `
+        <div class="month-breakdown" id="monthBreakdown">
+          <div class="break-chip car">🚚 السيارة<strong id="breakCar">0.00</strong></div>
+          <div class="break-chip fathi">🧑 فتحي<strong id="breakFathi">0.00</strong></div>
+          <div class="break-chip basheer">🏢 بشير<strong id="breakBasheer">0.00</strong></div>
+        </div>
+      `);
+    }
+    const histTop = document.querySelector('.history-top');
+    if(histTop && !document.getElementById('historyFilterNote')){
+      histTop.insertAdjacentHTML('afterend', '<div class="history-filter-note" id="historyFilterNote">الملخص بالأعلى للشهر الحالي، والسجل بالأسفل يحتفظ بكل الشهور بدون حذف تلقائي.</div>');
+    }
+  }
+  function updateCustomDetailField(){
+    const wrapper = document.getElementById('otherDetailWrapper');
+    const input = document.getElementById('otherDetail');
+    if(!wrapper || !input) return;
+    const needCustom = currentMode === 'expense' && currentCatConfig && currentCatConfig.custom;
+    wrapper.classList.toggle('show', !!needCustom);
+    if(needCustom){
+      const groupName = (GROUPS[currentExpenseGroup] || GROUPS.car).shortLabel;
+      input.placeholder = currentExpenseGroup === 'basheer'
+        ? 'اكتب تفاصيل مصروف بشير...'
+        : `اكتب تفاصيل ${groupName}...`;
+    } else {
+      input.value = '';
+    }
+  }
+  function selectExpenseGroup(group){
+    currentExpenseGroup = GROUPS[group] ? group : 'car';
+    writeJSON('expense_group', currentExpenseGroup);
+    currentCat = null;
+    currentCatConfig = null;
+    document.querySelectorAll('.expense-group-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.group === currentExpenseGroup);
+    });
+    currentSlotMap = {};
+    const groupDef = GROUPS[currentExpenseGroup] || GROUPS.car;
+    SLOT_IDS.forEach(slot => {
+      const btn = document.getElementById('cat-' + slot);
+      if(!btn) return;
+      const conf = groupDef.subs.find(s => s.slot === slot);
+      if(!conf){
+        btn.classList.add('hidden-slot');
+        btn.classList.remove('cat-active');
+        btn.style.display = 'none';
+        return;
+      }
+      currentSlotMap[slot] = conf;
+      btn.classList.remove('hidden-slot');
+      btn.style.display = 'flex';
+      btn.classList.remove('cat-active');
+      btn.innerHTML = `<span class="cat-icon">${conf.icon}</span>${conf.label}`;
+    });
+    updateCustomDetailField();
+  }
+  function selectCat(slotKey){
+    const conf = currentSlotMap[slotKey] || null;
+    if(!conf) return;
+    currentCat = conf.key;
+    currentCatConfig = conf;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('cat-active'));
+    const btn = document.getElementById('cat-' + slotKey);
+    if(btn) btn.classList.add('cat-active');
+    updateCustomDetailField();
+  }
+  function setMode(mode){
+    currentMode = mode;
+    const ib = document.getElementById('incomeBtn'), eb = document.getElementById('expenseBtn');
+    const cs = document.getElementById('catSection'), ab = document.getElementById('amountBox');
+    const locWrap = document.getElementById('incomeLocationWrap');
+    if(mode === 'income'){
+      if(ib) ib.className = 'mode-btn income-active';
+      if(eb) eb.className = 'mode-btn';
+      if(cs) cs.style.display = 'none';
+      if(ab) ab.className = 'amount-display-box income-mode';
+      if(locWrap) locWrap.style.display = 'block';
+    } else {
+      if(ib) ib.className = 'mode-btn';
+      if(eb) eb.className = 'mode-btn expense-active';
+      if(cs) cs.style.display = 'block';
+      if(ab) ab.className = 'amount-display-box expense-mode';
+      if(locWrap) locWrap.style.display = 'none';
+      selectExpenseGroup(currentExpenseGroup || 'car');
+    }
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('cat-active'));
+    currentCat = null;
+    currentCatConfig = null;
+    updateCustomDetailField();
+    const err = document.getElementById('errorMsg');
+    if(err) err.classList.remove('visible');
+  }
+  async function addEntry(){
+    const amountInput = document.getElementById('amountInput');
+    const errEl = document.getElementById('errorMsg');
+    const amount = parseFloat(amountInput ? amountInput.value : '');
+    if(isNaN(amount) || amount <= 0){
+      if(errEl){ errEl.textContent = '⚠️ يرجى إدخال قيمة صحيحة أكبر من صفر'; errEl.classList.add('visible'); }
+      return;
+    }
+    if(errEl) errEl.classList.remove('visible');
+    const now = new Date();
+    const record = {
+      id: Date.now(),
+      createdAt: now.toISOString(),
+      type: currentMode,
+      amount: amount,
+      date: now.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'}),
+      time: now.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+      month: getMonthKey(now)
+    };
+    if(currentMode === 'income'){
+      const location = (document.getElementById('incomeLocationInput')?.value || '').trim();
+      if(location) addLocationToStore(location);
+      record.cat = 'income';
+      record.location = location;
+      record.catLabel = location ? `💵 دخل — ${location}` : '💵 دخل';
+      record.catAr = location ? `إيراد - ${location}` : 'إيراد عام';
+      record.detail = '';
+    } else {
+      if(!currentCatConfig || !currentCat){
+        if(errEl){ errEl.textContent = '⚠️ اختر القسم ونوع المصروف الأول'; errEl.classList.add('visible'); }
+        return;
+      }
+      const customDetail = (document.getElementById('otherDetail')?.value || '').trim();
+      if(currentCatConfig.custom && !customDetail){
+        if(errEl){ errEl.textContent = '⚠️ اكتب تفاصيل المصروف'; errEl.classList.add('visible'); }
+        return;
+      }
+      record.cat = currentCat;
+      record.subCatKey = currentCat;
+      record.expenseGroup = currentExpenseGroup;
+      record.expenseGroupLabel = (GROUPS[currentExpenseGroup] || GROUPS.car).shortLabel;
+      record.catLabel = `${(GROUPS[currentExpenseGroup] || GROUPS.car).label} / ${currentCatConfig.icon} ${currentCatConfig.label}`;
+      record.catAr = `${record.expenseGroupLabel} - ${currentCatConfig.ar}`;
+      record.detail = currentCatConfig.custom ? customDetail : '';
+    }
+
+    if(IS_AUTH && typeof saveToFirebase === 'function'){
+      await saveToFirebase(record);
+    } else if(typeof getRecords === 'function' && typeof saveRecords === 'function'){
+      const records = getRecords();
+      records.unshift(record);
+      saveRecords(records);
+      updateTopSummary();
+      updateMonthTotals();
+      renderHistory();
+    }
+    clearValue();
+    showToast(currentMode === 'income' ? '✅ تم تسجيل الإيراد' : '✅ تم تسجيل المصروف');
+  }
+  function clearValue(){
+    const amount = document.getElementById('amountInput');
+    const other = document.getElementById('otherDetail');
+    const err = document.getElementById('errorMsg');
+    if(amount) amount.value = '';
+    if(other) other.value = '';
+    if(err) err.classList.remove('visible');
+  }
+  function updateTopSummary(){
+    const summary = calcSummary(getMonthRecords());
+    const el = document.getElementById('topNet');
+    if(el){
+      el.textContent = fmtMoney(Math.abs(summary.net));
+      el.className = 'net-big' + (summary.net < 0 ? ' negative' : summary.net > 0 ? ' positive' : '');
+    }
+    const driver = document.getElementById('topDriver');
+    const company = document.getElementById('topCompany');
+    if(driver) driver.textContent = fmtMoney(summary.userShare);
+    if(company) company.textContent = fmtMoney(summary.companyShare);
+  }
+  function updateMonthTotals(){
+    const summary = calcSummary(getMonthRecords());
+    const mi = document.getElementById('monthIncome');
+    const me = document.getElementById('monthExpense');
+    if(mi) mi.textContent = fmtMoney(summary.income);
+    if(me) me.textContent = fmtMoney(summary.expense);
+    const bc = document.getElementById('breakCar');
+    const bf = document.getElementById('breakFathi');
+    const bb = document.getElementById('breakBasheer');
+    if(bc) bc.textContent = fmtMoney(summary.car);
+    if(bf) bf.textContent = fmtMoney(summary.fathi);
+    if(bb) bb.textContent = fmtMoney(summary.basheer);
+  }
+  function renderHistory(){
+    const records = getAllRecordsEnhanced().map(normalizeRecord);
+    const list = document.getElementById('historyList');
+    const sc = document.getElementById('histSummary');
+    if(!list || !sc) return;
+    if(records.length === 0){
+      sc.style.display = 'none';
+      list.innerHTML = `<div class="empty-state"><span class="empty-icon">📂</span><p>لا توجد سجلات</p><small>سجل أول إيراد أو مصروف وهتلاقيه هنا.</small></div>`;
+      return;
+    }
+    const summary = calcSummary(getMonthRecords());
+    document.getElementById('hsTotalIncome').textContent = fmtMoney(summary.income);
+    document.getElementById('hsTotalExpense').textContent = fmtMoney(summary.expense);
+    document.getElementById('hsNet').textContent = fmtMoney(summary.net);
+    document.getElementById('hsNet').className = 'msm-value ' + (summary.net >= 0 ? 'gold' : 'red');
+    sc.style.display = 'block';
+    list.innerHTML = records.map(r => {
+      const title = r.type === 'income'
+        ? (r.location ? `💵 دخل — ${escapeHtml(r.location)}` : '💵 دخل')
+        : `${escapeHtml(r.catLabel || 'مصروف')}${r.detail ? ' — ' + escapeHtml(r.detail) : ''}`;
+      const badge = r.type === 'income' ? 'دخل' : (r.expenseGroupLabel || 'مصروف');
+      const recId = String(r.id);
+      const fbKey = escapeHtml(r._fbKey || '');
+      return `
+        <div class="record-item ${r.type === 'income' ? 'income-rec' : 'expense-rec'}" id="rec-${recId}">
+          <div class="rec-header">
+            <div class="rec-left">
+              <div class="rec-date">🕐 ${escapeHtml(r.date || '')} — ${escapeHtml(r.time || '')}</div>
+              <div class="rec-cat">${title}</div>
+            </div>
+            <div class="rec-right">
+              <div>
+                <div class="rec-amount">${fmtMoney(r.amount)}</div>
+                <span class="rec-type-badge ${r.type === 'income' ? 'income-badge' : 'expense-badge'}">${badge}</span>
+              </div>
+              <div class="rec-del" onclick="deleteRecord(${recId}${IS_AUTH ? `,'${fbKey}'` : ''})">🗑️</div>
+            </div>
+          </div>
+          <button class="rec-pdf-btn" onclick="exportRecordPDF(${recId})">📄 تصدير PDF</button>
+        </div>`;
+    }).join('');
+  }
+  function buildReportRows(records){
+    return records.map((raw, idx) => {
+      const r = normalizeRecord(raw);
+      const title = r.type === 'income'
+        ? (r.location ? `دخل — ${escapeHtml(r.location)}` : 'دخل')
+        : `${escapeHtml(r.expenseGroupLabel || 'مصروف')} / ${escapeHtml(r.catAr || r.cat || '')}${r.detail ? ' — ' + escapeHtml(r.detail) : ''}`;
+      return `
+        <tr style="background:${idx % 2 === 0 ? '#fffdf7' : '#f8f4ea'}">
+          <td style="padding:10px;border-bottom:1px solid #eee;text-align:center">${escapeHtml(r.date || '')}</td>
+          <td style="padding:10px;border-bottom:1px solid #eee;text-align:center">${escapeHtml(r.time || '')}</td>
+          <td style="padding:10px;border-bottom:1px solid #eee;text-align:right">${title}</td>
+          <td style="padding:10px;border-bottom:1px solid #eee;text-align:center">${r.type === 'income' ? 'إيراد' : 'مصروف'}</td>
+          <td style="padding:10px;border-bottom:1px solid #eee;text-align:center;font-weight:800;color:${r.type === 'income' ? '#2e7d32' : '#c62828'}">${fmtMoney(r.amount)}</td>
+        </tr>`;
+    }).join('');
+  }
+  function openReportWindow(title, rangeLabel, records){
+    const summary = calcSummary(records);
+    const rows = buildReportRows(records);
+    const html = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<title>${title}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}body{font-family:'Cairo',sans-serif;background:#f6f1e7;color:#3a2e1e;margin:0}
+  .page{max-width:980px;margin:20px auto;background:#fffdf7;border:1px solid #eadfb8;border-radius:24px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+  .head{padding:24px 28px;background:linear-gradient(135deg,#fff4c7,#f3e5f5,#e3f2fd)}
+  .title{font-size:28px;font-weight:900;color:#8c6a05}.sub{margin-top:6px;color:#7b6d53;font-size:13px}
+  .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:18px 24px}
+  .chip{background:#fff;border:1px solid #eadfb8;border-radius:18px;padding:12px;text-align:center}
+  .chip .lbl{font-size:12px;color:#7b6d53}.chip .val{font-size:20px;font-weight:900;margin-top:6px}
+  .blue .val{color:#1565c0}.green .val{color:#2e7d32}.purple .val{color:#8e24aa}.gold .val{color:#b8860b}.red .val{color:#c62828}
+  .section{padding:0 24px 24px}.tbl{width:100%;border-collapse:collapse;overflow:hidden;border-radius:18px;border:1px solid #eee}
+  .tbl th{background:#f5e8ad;padding:12px;font-size:13px;color:#5f512f}.foot{padding:16px 24px 24px;color:#7b6d53;font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="head">
+      <div class="title">${title}</div>
+      <div class="sub">${rangeLabel}</div>
+      <div class="sub">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric',weekday:'long'})}</div>
+    </div>
+    <div class="chips">
+      <div class="chip green"><div class="lbl">إجمالي الإيراد</div><div class="val">${fmtMoney(summary.income)}</div></div>
+      <div class="chip red"><div class="lbl">إجمالي المصاريف</div><div class="val">${fmtMoney(summary.expense)}</div></div>
+      <div class="chip gold"><div class="lbl">الصافي النهائي</div><div class="val">${fmtMoney(summary.net)}</div></div>
+      <div class="chip blue"><div class="lbl">مصاريف السيارة</div><div class="val">${fmtMoney(summary.car)}</div></div>
+      <div class="chip green"><div class="lbl">خصم فتحي من نصيبك</div><div class="val">${fmtMoney(summary.fathi)}</div></div>
+      <div class="chip purple"><div class="lbl">خصم بشير من الشركة</div><div class="val">${fmtMoney(summary.basheer)}</div></div>
+      <div class="chip blue"><div class="lbl">نصيبك بعد الخصم</div><div class="val">${fmtMoney(summary.userShare)}</div></div>
+      <div class="chip purple"><div class="lbl">نصيب الشركة بعد الخصم</div><div class="val">${fmtMoney(summary.companyShare)}</div></div>
+      <div class="chip gold"><div class="lbl">صافي التشغيل قبل خصومات فتحي/بشير</div><div class="val">${fmtMoney(summary.operationalNet)}</div></div>
+    </div>
+    <div class="section">
+      <table class="tbl">
+        <thead><tr><th>التاريخ</th><th>الوقت</th><th>البيان</th><th>النوع</th><th>المبلغ</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="5" style="padding:24px;text-align:center;color:#7b6d53">لا توجد بيانات في هذه الفترة</td></tr>'}</tbody>
+      </table>
+    </div>
+    <div class="foot">حساب الصافي والأنصبة — التقرير يحتفظ بكل الشهور، وتمت إضافة التقرير الأسبوعي من السبت إلى الجمعة.</div>
+  </div>
+  <script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script>
+</body>
+</html>`;
+    const w = window.open('', '_blank');
+    if(!w) return showToast('⚠️ اسمح بفتح نافذة الطباعة من المتصفح');
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }
+  function printMonthlyReport(){
+    const recs = getMonthRecords();
+    const now = new Date();
+    openReportWindow('التقرير الشهري', now.toLocaleDateString('ar-SA',{year:'numeric',month:'long'}), recs);
+  }
+  function printWeeklyReport(){
+    const { start, end } = getWeekBounds(new Date());
+    openReportWindow('التقرير الأسبوعي', `من السبت إلى الجمعة — ${formatDateRange(start, end)}`, getWeekRecords());
+  }
+  function primeAudio(){
+    if(audioCtx) return;
+    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(_){ }
+  }
+  function playPleasantChime(){
+    try{
+      if(!audioCtx) primeAudio();
+      if(!audioCtx) return;
+      const now = audioCtx.currentTime;
+      [659.25, 783.99, 987.77].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, now + i * 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.09, now + i * 0.12 + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.12 + 0.35);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(now + i * 0.12);
+        osc.stop(now + i * 0.12 + 0.4);
+      });
+    }catch(_){ }
+  }
+  function getAlertSettings(){
+    return readJSON('alert_settings', {
+      enabled:false,
+      timesPerDay:1,
+      times:['09:00','15:00','21:00'],
+      title:'تذكير إضافة البيانات',
+      body:'من فضلك سجل دخل ومصاريف اليوم.'
+    });
+  }
+  function fillAlertForm(){
+    const s = getAlertSettings();
+    const enabled = document.getElementById('alertEnabled');
+    const count = document.getElementById('alertCount');
+    const t1 = document.getElementById('alertTime1');
+    const t2 = document.getElementById('alertTime2');
+    const t3 = document.getElementById('alertTime3');
+    const title = document.getElementById('alertTitle');
+    const body = document.getElementById('alertBody');
+    if(enabled) enabled.checked = !!s.enabled;
+    if(count) count.value = String(s.timesPerDay || 1);
+    if(t1) t1.value = s.times?.[0] || '09:00';
+    if(t2) t2.value = s.times?.[1] || '15:00';
+    if(t3) t3.value = s.times?.[2] || '21:00';
+    if(title) title.value = s.title || 'تذكير إضافة البيانات';
+    if(body) body.value = s.body || 'من فضلك سجل دخل ومصاريف اليوم.';
+  }
+  function saveAlertSettings(){
+    const settings = {
+      enabled: !!document.getElementById('alertEnabled')?.checked,
+      timesPerDay: parseInt(document.getElementById('alertCount')?.value || '1', 10),
+      times: [
+        document.getElementById('alertTime1')?.value || '09:00',
+        document.getElementById('alertTime2')?.value || '15:00',
+        document.getElementById('alertTime3')?.value || '21:00'
+      ],
+      title: (document.getElementById('alertTitle')?.value || 'تذكير إضافة البيانات').trim(),
+      body: (document.getElementById('alertBody')?.value || 'من فضلك سجل دخل ومصاريف اليوم.').trim()
+    };
+    writeJSON('alert_settings', settings);
+    startAlertWatcher();
+    showToast('🔔 تم حفظ إعدادات التنبيه');
+  }
+  async function requestNotificationPermission(){
+    if(!('Notification' in window)) return showToast('⚠️ الإشعارات غير مدعومة في هذا المتصفح');
+    const result = await Notification.requestPermission();
+    showToast(result === 'granted' ? '✅ تم السماح بالإشعارات' : '⚠️ لم يتم السماح بالإشعارات');
+  }
+  function triggerReminder(title, body){
+    playPleasantChime();
+    if('vibrate' in navigator) navigator.vibrate([140,60,140]);
+    if('Notification' in window && Notification.permission === 'granted'){
+      try{
+        new Notification(title, {
+          body,
+          icon:'./icon-192.png',
+          badge:'./icon-192.png',
+          tag:'hesab-daily-reminder',
+          requireInteraction:true
+        });
+      }catch(_){ }
+    }
+    showToast(`🔔 ${title}`,'linear-gradient(135deg,#6a1b9a,#8e24aa)');
+  }
+  function startAlertWatcher(){
+    if(alertTimer) clearInterval(alertTimer);
+    const check = () => {
+      const settings = getAlertSettings();
+      if(!settings.enabled) return;
+      const now = new Date();
+      const hhmm = now.toTimeString().slice(0,5);
+      const fired = readJSON('alert_fired', {});
+      let changed = false;
+      Object.keys(fired).forEach(key => {
+        const day = key.split('|')[0];
+        if(day < now.toISOString().slice(0,10)) { delete fired[key]; changed = true; }
+      });
+      (settings.times || []).slice(0, settings.timesPerDay).forEach((timeValue, idx) => {
+        const fireKey = `${now.toISOString().slice(0,10)}|${idx}|${timeValue}`;
+        if(timeValue && hhmm === timeValue && !fired[fireKey]){
+          fired[fireKey] = Date.now();
+          changed = true;
+          triggerReminder(settings.title, settings.body);
+        }
+      });
+      if(changed) writeJSON('alert_fired', fired);
+    };
+    check();
+    alertTimer = setInterval(check, 30000);
+    document.addEventListener('visibilitychange', check);
+  }
+  function bindEnhancementEvents(){
+    document.getElementById('saveLocationBtn')?.addEventListener('click', () => {
+      const input = document.getElementById('incomeLocationInput');
+      const name = (input?.value || '').trim();
+      if(!name) return showToast('⚠️ اكتب اسم المكان الأول');
+      addLocationToStore(name);
+      showToast('📍 تم حفظ المكان');
+    });
+    document.getElementById('savedLocations')?.addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('button[data-remove]');
+      if(removeBtn){
+        const name = removeBtn.getAttribute('data-remove');
+        removeLocationFromStore(name);
+        showToast('🗑️ تم حذف المكان');
+        e.stopPropagation();
+        return;
+      }
+      const chip = e.target.closest('.loc-chip');
+      if(chip){
+        const name = chip.getAttribute('data-name') || '';
+        const input = document.getElementById('incomeLocationInput');
+        if(input) input.value = name;
+      }
+    });
+    document.getElementById('saveAlertsBtn')?.addEventListener('click', saveAlertSettings);
+    document.getElementById('askNotifBtn')?.addEventListener('click', requestNotificationPermission);
+    document.getElementById('alertCount')?.addEventListener('change', saveAlertSettings);
+    window.addEventListener('pointerdown', primeAudio, { once:true });
+  }
+  function initEnhancedApp(){
+    ensureEnhancementUI();
+    bindEnhancementEvents();
+    renderSavedLocations();
+    fillAlertForm();
+    setMode(typeof currentMode !== 'undefined' ? currentMode : 'income');
+    selectExpenseGroup(currentExpenseGroup || 'car');
+    updateTopSummary();
+    updateMonthTotals();
+    renderHistory();
+    startAlertWatcher();
+  }
+
+  window.selectExpenseGroup = selectExpenseGroup;
+  window.selectCat = selectCat;
+  window.setMode = setMode;
+  window.addEntry = addEntry;
+  window.clearValue = clearValue;
+  window.getMonthRecords = getMonthRecords;
+  window.updateTopSummary = updateTopSummary;
+  window.updateMonthTotals = updateMonthTotals;
+  window.renderHistory = renderHistory;
+  window.printMonthlyReport = printMonthlyReport;
+  window.printWeeklyReport = printWeeklyReport;
+  window.saveAlertSettings = saveAlertSettings;
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initEnhancedApp);
+  else initEnhancedApp();
+})();
+
+</script>
 
 
 
